@@ -2,12 +2,12 @@ import axios from 'axios'
 
 const api = axios.create({
   baseURL: import.meta.env.VITE_API_URL,
-  withCredentials: true, // если будете слать куки
+  withCredentials: true,
 })
 
 // interceptor для токена (пока заглушка)
 api.interceptors.request.use(cfg => {
-  // cfg.headers.Authorization = `Bearer ${localStorage.getItem('token')}`
+  cfg.headers.Authorization = `Bearer ${localStorage.getItem('access_token')}`
   return cfg
 })
 
