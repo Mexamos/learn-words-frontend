@@ -1,7 +1,6 @@
 /* Header */
 .header-component {
   display: flex;
-  justify-content: space-between;
   align-items: center;
   background-color: #ffffff;
   padding: 1rem 2rem;
@@ -16,9 +15,23 @@
   margin: 0;
 }
 
+/* SideMenu button */
+.menu-toggle-button {
+  background: none;
+  border: none;
+  cursor: pointer;
+  margin-right: 1rem;
+  color: #2d3748;
+}
+
+.menu-toggle-button:hover {
+  color: #4a5568;
+}
+
 /* Avatar */
 .avatar-wrapper {
   position: relative;
+  margin-left: auto;
 }
 
 .avatar-button {

@@ -2,7 +2,7 @@ import './Header.css'
 import { useContext, useState, useRef, useEffect } from 'react'
 import { AuthContext } from '../../contexts/AuthContext'
 
-export default function Header({ pageTitle }) {
+export default function Header({ pageTitle, isSideMenuVisible, onMenuToggle }) {
   const { user, logout } = useContext(AuthContext)
   const [menuOpen, setMenuOpen] = useState(false)
   const menuRef = useRef(null)
@@ -27,6 +27,16 @@ export default function Header({ pageTitle }) {
 
   return (
     <header className="header-component" ref={menuRef}>
+      {!isSideMenuVisible && (
+        <button
+          className="menu-toggle-button"
+          onClick={onMenuToggle}
+          aria-label="Open side menu"
+        >
+          ☰
+        </button>
+      )}
+
       <h1 className="header-component-title">{pageTitle}</h1>
 
       <div className="avatar-wrapper">
