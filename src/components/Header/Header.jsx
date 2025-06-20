@@ -28,13 +28,14 @@ export default function Header({ pageTitle, isSideMenuVisible, onMenuToggle }) {
   return (
     <header className="header-component" ref={menuRef}>
       {!isSideMenuVisible && (
-        <button
-          className="menu-toggle-button"
-          onClick={onMenuToggle}
-          aria-label="Open side menu"
-        >
-          ☰
-        </button>
+        <div className='header-side-menu-toggle-container'>
+          <div
+            className="menu-toggle-button"
+            onClick={onMenuToggle}
+          >
+            ☰
+          </div>
+        </div>
       )}
 
       <h1 className="header-component-title">{pageTitle}</h1>

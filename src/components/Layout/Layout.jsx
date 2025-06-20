@@ -10,9 +10,8 @@ export default function Layout({ pageTitle, children }) {
     <div className="layout-container">
       <SideMenu
         items={[
-          { label: 'Dashboard', path: '/dashboard' },
-          { label: 'Settings', path: '/settings' },
-          { label: 'Profile', path: '/profile' }
+          { label: 'Dashboard', path: '/' },
+          { label: 'Add new words', path: '/new-words' },
         ]}
         isVisible={sidebarVisible}
         onCollapse={() => setSidebarVisible(false)}

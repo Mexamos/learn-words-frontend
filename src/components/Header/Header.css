@@ -3,7 +3,8 @@
   display: flex;
   align-items: center;
   background-color: #ffffff;
-  padding: 1rem 2rem;
+  padding: 1rem 2rem 1rem 0;
+  min-height: 50px;
   box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
   position: relative;
   z-index: 10;
@@ -13,19 +14,26 @@
   font-size: 1.5rem;
   font-weight: bold;
   margin: 0;
+  padding: 0 0 0 20px;
 }
 
 /* SideMenu button */
+.header-side-menu-toggle-container {
+
+}
 .menu-toggle-button {
   background: none;
   border: none;
   cursor: pointer;
-  margin-right: 1rem;
+  font-size: 30px;
   color: #2d3748;
+  margin: 0 0 0 20px;
+  padding: 0 10px 5px 10px;
 }
 
 .menu-toggle-button:hover {
-  color: #4a5568;
+  background-color: #cbcbcb54;
+  border-radius: 6px;
 }
 
 /* Avatar */

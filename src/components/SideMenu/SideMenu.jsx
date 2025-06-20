@@ -8,17 +8,24 @@ import './SideMenu.css'
  * @param {function} onCollapse - Callback to collapse/hide the side menu
  */
 export default function SideMenu({ items, isVisible, onCollapse }) {
-  if (!isVisible) return null
-
   return (
-    <aside className="side-menu">
+    <aside className={`side-menu${isVisible ? ' open' : ''}`}>
       <div className="side-menu-header">
-        <button
-          className="collapse-button"
-          onClick={onCollapse}
-          aria-label="Collapse side menu"
-        >
-        </button>
+          <svg
+            xmlns="http://www.w3.org/2000/svg"
+            width={24}
+            height={24}
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke={'currentColor'}
+            strokeWidth={2}
+            strokeLinecap="round"
+            strokeLinejoin="round"
+            onClick={onCollapse}
+            className="side-menu-hide-button"
+          >
+            <polyline points="15 18 9 12 15 6" />
+          </svg>
       </div>
 
       <nav className="menu-nav">
