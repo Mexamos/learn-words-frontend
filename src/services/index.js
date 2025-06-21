@@ -5,7 +5,6 @@ const api = axios.create({
   withCredentials: true,
 })
 
-// interceptor для токена (пока заглушка)
 api.interceptors.request.use(cfg => {
   cfg.headers.Authorization = `Bearer ${localStorage.getItem('access_token')}`
   return cfg

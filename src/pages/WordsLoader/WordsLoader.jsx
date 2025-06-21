@@ -1,15 +1,18 @@
 import './WordsLoader.css'
-import { useContext, useState } from 'react'
+import { useState } from 'react'
 import { 
-  Select, Portal, createListCollection, Box, VStack, Input, FileUpload, Icon
+  Select, Portal, createListCollection, Box, VStack, Input, FileUpload, Icon, Button
 } from '@chakra-ui/react';
+import { toast } from 'sonner';
 import { LuUpload } from "react-icons/lu"
-import { AuthContext } from '../../contexts/AuthContext'
+import { submitWords } from '../../services/wordsService'
 import Layout from '../../components/Layout/Layout'
 
 export default function WordsLoader() {
-  const [value, setValue] = useState([])
-  const [urls, setUrls] = useState({ url1: '', url2: '' })
+  const [selectorValue, setSelectorValue] = useState([])
+  const [url, setUrl] = useState('')
+  const [files, setFiles] = useState([])
+  const [submitIsLoading, setSubmitIsLoading] = useState(false);
 
   const sources = createListCollection({
     items: [
@@ -20,14 +23,46 @@ export default function WordsLoader() {
     selectionMode: 'single',
   })
 
-  const handleChange = (e) => {
-    setValue(e.value);
+  const handleSelectorChange = (e) => {
+    setSelectorValue(e.value);
   };
 
   const handleUrlChange = (e) => {
     const { name, value } = e.target
-    setUrls(prev => ({ ...prev, [name]: value }))
+    setUrl(value)
   }
+
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    setSubmitIsLoading(true);
+    try {
+      const result = await submitWords({ source: selectorValue, url, files });
+      console.log('submitWords result:', result);
+      toast.success(
+        'Words submitted successfully',
+        {
+          duration: 5000,
+          closeButton: true,
+        }
+      );
+
+      console.log('Words submitted after toaster');
+      // setSelectorValue([]);
+      setUrl('');
+      setFiles([]);
+    } catch (error) {
+      toast.error(
+        'Something went wrong',
+        {
+          description: String(error),
+          duration: 5000,
+          closeButton: true,
+        }
+      );
+    } finally {
+      setSubmitIsLoading(false);
+    }
+  };
 
   return (
    <Layout pageTitle="Words loader">
@@ -35,8 +70,8 @@ export default function WordsLoader() {
         <Select.Root
           collection={sources}
           width="320px"
-          value={value}
-          onValueChange={handleChange}
+          value={selectorValue}
+          onValueChange={handleSelectorChange}
         >
           <Select.Label>Words source</Select.Label>
 
@@ -63,19 +98,24 @@ export default function WordsLoader() {
           </Portal>
         </Select.Root>
 
-        {(value.includes('youtube') || value.includes('url-images-with-text')) && (
+        {(selectorValue.includes('youtube') || selectorValue.includes('url-images-with-text')) && (
           <VStack spacing={3} mt={4} maxW="320px">
             <Input
-              name="url1"
-              placeholder="Enter URL #1"
-              value={urls.url1}
+              name="url"
+              placeholder="Enter URL"
+              value={url}
               onChange={handleUrlChange}
             />
           </VStack>
         )}
 
-        {value.includes('video-file') && (
-          <FileUpload.Root maxW="xl" alignItems="stretch" maxFiles={10}>
+        {selectorValue.includes('video-file') && (
+          <FileUpload.Root 
+            maxW="xl" alignItems="stretch" maxFiles={10} mt={4}
+            onFileAccept={(files) => {
+              setFiles(files);
+            }}
+          >
             <FileUpload.HiddenInput />
             <FileUpload.Dropzone>
               <Icon size="md" color="fg.muted">
@@ -83,11 +123,28 @@ export default function WordsLoader() {
               </Icon>
               <FileUpload.DropzoneContent>
                 <Box>Drag and drop files here</Box>
-                <Box color="fg.muted">.png, .jpg up to 5MB</Box>
+                <Box color="fg.muted">.mkv, .mp4 up to ????MB</Box>
               </FileUpload.DropzoneContent>
             </FileUpload.Dropzone>
             <FileUpload.List />
           </FileUpload.Root>
+        )}
+
+        {selectorValue.length > 0 && (
+          <Button
+            type="submit"
+            variant="surface"
+            isLoading={submitIsLoading}
+            loadingText="Submitting"
+            onClick={handleSubmit}
+            mt={4}
+            _active={{
+              transform: "scale(0.94)",
+              boxShadow: "inner-lg",
+            }}
+          >
+            Submit
+          </Button>
         )}
 
     </Layout>

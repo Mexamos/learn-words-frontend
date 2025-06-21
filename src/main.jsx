@@ -4,6 +4,7 @@ import './index.css'
 import { GoogleOAuthProvider } from '@react-oauth/google'
 import { BrowserRouter } from 'react-router-dom'
 import { ChakraProvider, defaultSystem } from '@chakra-ui/react'
+import { Toaster } from 'sonner'
 import { AuthProvider } from './contexts/AuthContext'
 import App from './App'
 
@@ -16,6 +17,7 @@ root.render(
       <BrowserRouter>
         <AuthProvider>
           <App />
+          <Toaster position="top-right" richColors />
         </AuthProvider>
       </BrowserRouter>
     </ChakraProvider>

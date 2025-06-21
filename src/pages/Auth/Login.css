@@ -48,6 +48,8 @@
 }
 
 .loging-card {
+  display: grid;
+  place-items: center;
   width: 100%;
   max-width: 400px;
   background: white;
