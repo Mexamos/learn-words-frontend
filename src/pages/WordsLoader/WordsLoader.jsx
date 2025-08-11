@@ -45,20 +45,31 @@ export default function WordsLoader() {
           closeButton: true,
         }
       );
-
-      console.log('Words submitted after toaster');
-      // setSelectorValue([]);
       setUrl('');
       setFiles([]);
     } catch (error) {
-      toast.error(
-        'Something went wrong',
-        {
-          description: String(error),
-          duration: 5000,
-          closeButton: true,
-        }
-      );
+      if (error.response?.data?.detail?.code === 'VIDEO_TOO_LONG_FOR_PLAN') {
+        toast.error(
+          error.response.data.detail.title,
+          {
+            description: error.response.data.detail.message,
+            duration: 20000,
+            closeButton: true,
+          }
+        );
+        setUrl('');
+        setFiles([]);
+      } else {
+        console.error('Error submitting words:', error);
+        toast.error(
+          'Something went wrong',
+          {
+            description: String(error),
+            duration: 5000,
+            closeButton: true,
+          }
+        );
+      }
     } finally {
       setSubmitIsLoading(false);
     }
@@ -134,7 +145,7 @@ export default function WordsLoader() {
           <Button
             type="submit"
             variant="surface"
-            isLoading={submitIsLoading}
+            loading={submitIsLoading}
             loadingText="Submitting"
             onClick={handleSubmit}
             mt={4}
