@@ -7,6 +7,7 @@ export const AuthContext = createContext()
 export function AuthProvider({ children }) {
   const [user, setUser] = useState(null)
   const [loading, setLoading] = useState(true)
+  const [needsLanguageSetup, setNeedsLanguageSetup] = useState(false)
   const navigate = useNavigate()
 
   // При старте пытаемся получить профиль по токену
@@ -21,6 +22,10 @@ export function AuthProvider({ children }) {
     api.get('/me')
       .then(res => {
         setUser(res.data)
+        // Check if user needs to set native language
+        if (!res.data.native_language) {
+          setNeedsLanguageSetup(true)
+        }
       })
       .catch(() => {
         console.error('Failed to fetch user profile')
@@ -30,7 +35,7 @@ export function AuthProvider({ children }) {
       .finally(() => {
         setLoading(false)
       })
-  }, [])
+  }, [navigate])
 
   // Функция логина
   const login = credential => {
@@ -40,6 +45,10 @@ export function AuthProvider({ children }) {
         localStorage.setItem('access_token', access_token)
         api.defaults.headers.Authorization = `Bearer ${access_token}`
         setUser(user)
+        // Check if user needs to set native language
+        if (!user.native_language) {
+          setNeedsLanguageSetup(true)
+        }
         navigate('/')
       })
   }
@@ -48,12 +57,22 @@ export function AuthProvider({ children }) {
   const logout = () => {
     localStorage.removeItem('access_token')
     setUser(null)
+    setNeedsLanguageSetup(false)
     api.defaults.headers.Authorization = null
     navigate('/login')
   }
 
+  // Функция обновления пользователя
+  const updateUser = (userData) => {
+    setUser(userData)
+    // Check if language setup is now complete
+    if (userData.native_language) {
+      setNeedsLanguageSetup(false)
+    }
+  }
+
   return (
-    <AuthContext.Provider value={{ user, loading, login, logout }}>
+    <AuthContext.Provider value={{ user, loading, login, logout, needsLanguageSetup, updateUser }}>
       {children}
     </AuthContext.Provider>
   )

@@ -1,25 +1,31 @@
 import './WordsLoader.css'
 import { useState } from 'react'
 import { 
-  Select, Portal, createListCollection, Box, VStack, Input, FileUpload, Icon, Button
+  Select, Portal, createListCollection, Button
 } from '@chakra-ui/react';
 import { toast } from 'sonner';
-import { LuUpload } from "react-icons/lu"
-import { submitWords } from '../../services/wordsService'
+import { importFromYoutube, importFromVideoOcr, importFromImagesOcr } from '../../services/wordsService'
 import Layout from '../../components/Layout/Layout'
+import YouTubeImportForm from './components/YouTubeImportForm'
+import VideoOcrImportForm from './components/VideoOcrImportForm'
+import ImageOcrImportForm from './components/ImageOcrImportForm'
+import ImageUrlImportForm from './components/ImageUrlImportForm'
+import WordSelectionModal from '../../components/WordSelectionModal/WordSelectionModal'
+import { IMPORT_SOURCES } from './constants'
 
 export default function WordsLoader() {
   const [selectorValue, setSelectorValue] = useState([])
   const [url, setUrl] = useState('')
   const [files, setFiles] = useState([])
+  const [imageFiles, setImageFiles] = useState([])
+  const [selectedLanguage, setSelectedLanguage] = useState(['spa'])
   const [submitIsLoading, setSubmitIsLoading] = useState(false);
+  const [isModalOpen, setIsModalOpen] = useState(false);
+  const [modalWords, setModalWords] = useState([]);
+  const [modalLanguage, setModalLanguage] = useState('');
 
   const sources = createListCollection({
-    items: [
-      { label: "YouTube video", value: "youtube" },
-      { label: "Link to page with images with text", value: "url-images-with-text" },
-      { label: "Video file", value: "video-file" },
-    ],
+    items: IMPORT_SOURCES,
     selectionMode: 'single',
   })
 
@@ -32,39 +38,87 @@ export default function WordsLoader() {
     setUrl(value)
   }
 
+  const handleLanguageChange = (e) => {
+    setSelectedLanguage(e.value);
+  };
+
   const handleSubmit = async (e) => {
     e.preventDefault();
     setSubmitIsLoading(true);
     try {
-      const result = await submitWords({ source: selectorValue, url, files });
-      console.log('submitWords result:', result);
-      toast.success(
-        'Words submitted successfully',
-        {
-          duration: 5000,
-          closeButton: true,
+      let result;
+      
+      if (selectorValue.includes('text-on-video-file')) {
+        if (!files || files.length === 0) {
+          toast.error('Please select a video file');
+          return;
         }
-      );
-      setUrl('');
-      setFiles([]);
+        if (!selectedLanguage || selectedLanguage.length === 0) {
+          toast.error('Please select a language');
+          return;
+        }
+        result = await importFromVideoOcr({ 
+          videoFile: files[0],
+          language: selectedLanguage[0]
+        });
+      } else if (selectorValue.includes('images-ocr')) {
+        if (!imageFiles || imageFiles.length === 0) {
+          toast.error('Please select at least one image file');
+          return;
+        }
+        if (imageFiles.length > 5) {
+          toast.error('Maximum 5 images allowed');
+          return;
+        }
+        if (!selectedLanguage || selectedLanguage.length === 0) {
+          toast.error('Please select a language');
+          return;
+        }
+        result = await importFromImagesOcr({ 
+          imageFiles: imageFiles,
+          language: selectedLanguage[0]
+        });
+      } else if (selectorValue.includes('youtube')) {
+        result = await importFromYoutube({ source: selectorValue, url, files });
+      } else if (selectorValue.includes('url-images-with-text')) {
+        toast.error('There is no handler for this source');
+      } else {
+        toast.error('Please select a source');
+        return;
+      }
+      
+      console.log('Import result:', result);
+      
+      // Open modal with the imported words
+      if (result && result.words && result.words.length > 0) {
+        setModalWords(result.words);
+        setModalLanguage(result.language);
+        setIsModalOpen(true);
+        setUrl('');
+      } else {
+        toast.error('No words found in the import');
+      }
     } catch (error) {
-      if (error.response?.data?.detail?.code === 'VIDEO_TOO_LONG_FOR_PLAN') {
+      const errorCode = error.response?.data?.detail?.code;
+      const errorTitle = error.response?.data?.detail?.title || 'Something went wrong';
+      const errorMessage = error.response?.data?.detail?.message || String(error);
+      
+      if (errorCode === 'VIDEO_TOO_LONG_FOR_PLAN' || errorCode === 'NO_TEXT_FOUND' || errorCode === 'INVALID_FRAME_INTERVAL') {
         toast.error(
-          error.response.data.detail.title,
+          errorTitle,
           {
-            description: error.response.data.detail.message,
+            description: errorMessage,
             duration: 20000,
             closeButton: true,
           }
         );
         setUrl('');
-        setFiles([]);
       } else {
         console.error('Error submitting words:', error);
         toast.error(
-          'Something went wrong',
+          errorTitle,
           {
-            description: String(error),
+            description: errorMessage,
             duration: 5000,
             closeButton: true,
           }
@@ -109,36 +163,36 @@ export default function WordsLoader() {
           </Portal>
         </Select.Root>
 
-        {(selectorValue.includes('youtube') || selectorValue.includes('url-images-with-text')) && (
-          <VStack spacing={3} mt={4} maxW="320px">
-            <Input
-              name="url"
-              placeholder="Enter URL"
-              value={url}
-              onChange={handleUrlChange}
-            />
-          </VStack>
+        {selectorValue.includes('text-on-video-file') && (
+          <VideoOcrImportForm
+            files={files}
+            onFilesChange={setFiles}
+            selectedLanguage={selectedLanguage}
+            onLanguageChange={handleLanguageChange}
+          />
         )}
 
-        {selectorValue.includes('video-file') && (
-          <FileUpload.Root 
-            maxW="xl" alignItems="stretch" maxFiles={10} mt={4}
-            onFileAccept={(files) => {
-              setFiles(files);
-            }}
-          >
-            <FileUpload.HiddenInput />
-            <FileUpload.Dropzone>
-              <Icon size="md" color="fg.muted">
-                <LuUpload />
-              </Icon>
-              <FileUpload.DropzoneContent>
-                <Box>Drag and drop files here</Box>
-                <Box color="fg.muted">.mkv, .mp4 up to ????MB</Box>
-              </FileUpload.DropzoneContent>
-            </FileUpload.Dropzone>
-            <FileUpload.List />
-          </FileUpload.Root>
+        {selectorValue.includes('images-ocr') && (
+          <ImageOcrImportForm
+            files={imageFiles}
+            onFilesChange={setImageFiles}
+            selectedLanguage={selectedLanguage}
+            onLanguageChange={handleLanguageChange}
+          />
+        )}
+
+        {selectorValue.includes('youtube') && (
+          <YouTubeImportForm 
+            url={url}
+            onChange={handleUrlChange}
+          />
+        )}
+
+        {selectorValue.includes('url-images-with-text') && (
+          <ImageUrlImportForm 
+            url={url}
+            onChange={handleUrlChange}
+          />
         )}
 
         {selectorValue.length > 0 && (
@@ -157,6 +211,13 @@ export default function WordsLoader() {
             Submit
           </Button>
         )}
+
+        <WordSelectionModal
+          isOpen={isModalOpen}
+          onClose={() => setIsModalOpen(false)}
+          words={modalWords}
+          language={modalLanguage}
+        />
 
     </Layout>
   )
