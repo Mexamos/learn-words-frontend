@@ -76,15 +76,26 @@ export default function WordSelectionModal({ isOpen, onClose, words = [], langua
       
       // 4. Add selected words in batch
       const wordsArray = Array.from(selectedWords);
-      await addWordsBatch(vocabulary.id, wordsArray);
+      const addedWords = await addWordsBatch(vocabulary.id, wordsArray);
       
-      toast.success(
-        `${selectedWords.size} word${selectedWords.size > 1 ? 's' : ''} added successfully`,
-        {
+      const addedCount = addedWords.length;
+      const duplicatesCount = selectedWords.size - addedCount;
+      
+      if (addedCount > 0) {
+        let message = `${addedCount} word${addedCount > 1 ? 's' : ''} added successfully`;
+        if (duplicatesCount > 0) {
+          message += ` (${duplicatesCount} duplicate${duplicatesCount > 1 ? 's' : ''} skipped)`;
+        }
+        toast.success(message, {
           duration: 5000,
           closeButton: true,
-        }
-      );
+        });
+      } else {
+        toast.info('All selected words already exist in this vocabulary', {
+          duration: 5000,
+          closeButton: true,
+        });
+      }
       
       onClose();
     } catch (error) {

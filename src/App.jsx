@@ -4,6 +4,9 @@ import LanguageSetupGuard from './components/LanguageSetupGuard/LanguageSetupGua
 import Login from './pages/Auth/Login'
 import Dashboard from './pages/Dashboard/Dashboard'
 import WordsLoader from './pages/WordsLoader/WordsLoader'
+import VocabulariesList from './pages/VocabulariesList/VocabulariesList'
+import VocabularyDetail from './pages/VocabularyDetail/VocabularyDetail'
+import LearnWords from './pages/LearnWords/LearnWords'
 
 export default function App() {
   return (
@@ -25,6 +28,36 @@ export default function App() {
           <ProtectedRoute>
             <LanguageSetupGuard>
               <WordsLoader />
+            </LanguageSetupGuard>
+         </ProtectedRoute>
+       }
+      />
+      <Route
+        path="/vocabularies"
+        element={
+          <ProtectedRoute>
+            <LanguageSetupGuard>
+              <VocabulariesList />
+            </LanguageSetupGuard>
+         </ProtectedRoute>
+       }
+      />
+      <Route
+        path="/vocabularies/:id"
+        element={
+          <ProtectedRoute>
+            <LanguageSetupGuard>
+              <VocabularyDetail />
+            </LanguageSetupGuard>
+         </ProtectedRoute>
+       }
+      />
+      <Route
+        path="/learn"
+        element={
+          <ProtectedRoute>
+            <LanguageSetupGuard>
+              <LearnWords />
             </LanguageSetupGuard>
          </ProtectedRoute>
        }

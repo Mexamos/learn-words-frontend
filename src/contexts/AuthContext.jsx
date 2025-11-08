@@ -10,7 +10,6 @@ export function AuthProvider({ children }) {
   const [needsLanguageSetup, setNeedsLanguageSetup] = useState(false)
   const navigate = useNavigate()
 
-  // При старте пытаемся получить профиль по токену
   useEffect(() => {
     const token = localStorage.getItem('access_token')
     if (!token) {
@@ -37,7 +36,6 @@ export function AuthProvider({ children }) {
       })
   }, [navigate])
 
-  // Функция логина
   const login = credential => {
     return api.post('/auth/login', { credential })
       .then(res => {
@@ -53,7 +51,6 @@ export function AuthProvider({ children }) {
       })
   }
 
-  // Функция логаута
   const logout = () => {
     localStorage.removeItem('access_token')
     setUser(null)
@@ -62,7 +59,6 @@ export function AuthProvider({ children }) {
     navigate('/login')
   }
 
-  // Функция обновления пользователя
   const updateUser = (userData) => {
     setUser(userData)
     // Check if language setup is now complete

@@ -82,6 +82,7 @@ export default function WordsLoader() {
         result = await importFromYoutube({ source: selectorValue, url, files });
       } else if (selectorValue.includes('url-images-with-text')) {
         toast.error('There is no handler for this source');
+        return;
       } else {
         toast.error('Please select a source');
         return;

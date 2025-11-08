@@ -10,7 +10,7 @@ export default function Dashboard() {
       <p>
         Welcome, <strong>{user?.name}</strong>!
       </p>
-      {/* остальной контент */}
+      {/* rest of content */}
     </Layout>
   )
 }

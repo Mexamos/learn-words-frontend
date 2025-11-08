@@ -11,6 +11,8 @@ export default function Layout({ pageTitle, children }) {
       <SideMenu
         items={[
           { label: 'Dashboard', path: '/' },
+          { label: 'Learn Words', path: '/learn' },
+          { label: 'My Vocabularies', path: '/vocabularies' },
           { label: 'Add new words', path: '/new-words' },
         ]}
         isVisible={sidebarVisible}
