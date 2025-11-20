@@ -27,6 +27,12 @@ const TYPE_OPTIONS = [
   { label: 'Images OCR', value: 'images_ocr' }
 ];
 
+const VIEWED_OPTIONS = [
+  { label: 'All', value: 'all', apiValue: null },
+  { label: 'Unviewed', value: 'unviewed', apiValue: false },
+  { label: 'Viewed', value: 'viewed', apiValue: true }
+];
+
 export default function ImportsHistory() {
   const navigate = useNavigate();
   const [imports, setImports] = useState([]);
@@ -34,6 +40,7 @@ export default function ImportsHistory() {
   const [page, setPage] = useState(1);
   const [total, setTotal] = useState(0);
   const [typeFilter, setTypeFilter] = useState(['all']);
+  const [viewedFilter, setViewedFilter] = useState(['unviewed']); // Default: Unviewed
   
   // Modal state
   const [isModalOpen, setIsModalOpen] = useState(false);
@@ -48,26 +55,45 @@ export default function ImportsHistory() {
     selectionMode: 'single',
   });
 
+  const viewedCollection = createListCollection({
+    items: VIEWED_OPTIONS,
+    selectionMode: 'single',
+  });
+
   const loadImports = async () => {
     setLoading(true);
     try {
       const task_type = typeFilter[0] === 'all' ? null : typeFilter[0];
+      
+      // Convert viewed filter to API value
+      const viewedOption = VIEWED_OPTIONS.find(opt => opt.value === viewedFilter[0]);
+      const viewed = viewedOption ? viewedOption.apiValue : null;
       
       const data = await getImportHistory({ 
         page, 
         limit, 
         status: 'completed',
         task_type,
-        viewed: false
+        viewed,
       });
       
-      console.log('📚 [ImportsHistory] Loaded unreviewed imports:', {
+      console.log('📚 [ImportsHistory] Loaded imports:', {
         count: data.tasks?.length || 0,
         total: data.total,
         page
       });
       
-      setImports(data.tasks || []);
+      // Sort imports: unviewed first (viewed=false), then by created_at descending
+      const sortedImports = (data.tasks || []).sort((a, b) => {
+        // First priority: unviewed tasks first
+        if (a.viewed !== b.viewed) {
+          return a.viewed ? 1 : -1; // false (unviewed) comes first
+        }
+        // Second priority: newer tasks first
+        return new Date(b.created_at) - new Date(a.created_at);
+      });
+      
+      setImports(sortedImports);
       setTotal(data.total || 0);
     } catch (error) {
       console.error('❌ [ImportsHistory] Error loading imports:', error);
@@ -81,7 +107,7 @@ export default function ImportsHistory() {
 
   useEffect(() => {
     loadImports();
-  }, [page, typeFilter]);
+  }, [page, typeFilter, viewedFilter]);
 
   const handleReviewWords = (task) => {
     if (!task.result?.words || task.result.words.length === 0) {
@@ -128,7 +154,39 @@ export default function ImportsHistory() {
       <VStack alignItems="stretch" gap={6} width="100%" maxWidth="1200px">
 
         {/* Filters */}
-        <HStack gap={4} flexWrap="wrap" justifyContent="space-between" width="100%">
+        <HStack gap={4} flexWrap="wrap" justifyContent="flex-start" width="100%">
+          <Select.Root
+            collection={viewedCollection}
+            value={viewedFilter}
+            onValueChange={(e) => {
+              setViewedFilter(e.value);
+              setPage(1); // Reset to first page on filter change
+            }}
+            width="200px"
+          >
+            <Select.Label>Status</Select.Label>
+            <Select.Control>
+              <Select.Trigger>
+                <Select.ValueText placeholder="Unviewed" />
+              </Select.Trigger>
+              <Select.IndicatorGroup>
+                <Select.Indicator />
+              </Select.IndicatorGroup>
+            </Select.Control>
+            <Portal>
+              <Select.Positioner>
+                <Select.Content>
+                  {viewedCollection.items.map((item) => (
+                    <Select.Item item={item} key={item.value}>
+                      {item.label}
+                      <Select.ItemIndicator />
+                    </Select.Item>
+                  ))}
+                </Select.Content>
+              </Select.Positioner>
+            </Portal>
+          </Select.Root>
+
           <Select.Root
             collection={typeCollection}
             value={typeFilter}

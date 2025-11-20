@@ -320,3 +320,43 @@ export const getAllWords = async (vocabularyId, limit = 10000, excludeLearnedTod
   const response = await api.get(`/api/v1/vocabularies/${vocabularyId}/words?${params.toString()}`);
   return response.data;
 };
+
+/**
+ * Get translations for words without saving to database.
+ * @param {string[]} words - Array of words to translate
+ * @param {string} languageFrom - Source language code
+ * @param {string} languageTo - Target language code
+ * @returns {Promise<Array<{word: string, translation: string}>>}
+ */
+export const translateWordsPreview = async (words, languageFrom, languageTo) => {
+  const response = await api.post('/api/v1/vocabularies/translate', {
+    words,
+    language_from: languageFrom,
+    language_to: languageTo
+  });
+  return response.data;
+};
+
+/**
+ * Add words with custom translations to vocabulary.
+ * @param {number} vocabularyId
+ * @param {Array<{word: string, translation: string}>} wordsWithTranslations
+ * @returns {Promise<Array>}
+ */
+export const addWordsWithTranslations = async (vocabularyId, wordsWithTranslations) => {
+  const response = await api.post(
+    `/api/v1/vocabularies/${vocabularyId}/words/batch-with-translations`,
+    { words: wordsWithTranslations }
+  );
+  return response.data;
+};
+
+/**
+ * Delete a vocabulary and all its words.
+ * @param {number} vocabularyId
+ * @returns {Promise<void>}
+ */
+export const deleteVocabulary = async (vocabularyId) => {
+  const response = await api.delete(`/api/v1/vocabularies/${vocabularyId}`);
+  return response.data;
+};

@@ -1,0 +1,46 @@
+.translations-table-container {
+  max-height: 400px;
+  overflow-y: auto;
+  border: 1px solid #e2e8f0;
+  border-radius: 8px;
+}
+
+.translations-table {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+.translations-table thead {
+  position: sticky;
+  top: 0;
+  background: #f7fafc;
+  z-index: 1;
+}
+
+.translations-table th {
+  padding: 0.75rem;
+  text-align: left;
+  font-weight: 600;
+  font-size: 0.875rem;
+  color: #4a5568;
+  border-bottom: 2px solid #e2e8f0;
+}
+
+.translations-table td {
+  padding: 0.75rem;
+  border-bottom: 1px solid #e2e8f0;
+}
+
+.translations-table tbody tr:last-child td {
+  border-bottom: none;
+}
+
+.translations-table tbody tr:hover {
+  background: #f7fafc;
+}
+
+.word-text {
+  font-weight: 500;
+  color: #2d3748;
+}
+

@@ -5,22 +5,22 @@ import { LANGUAGE_NAMES } from '../../../constants/languages';
 const STATUS_CONFIGS = {
   completed: {
     icon: LuCheck,
-    colorScheme: 'green',
+    colorPalette: 'green',
     label: 'Completed'
   },
   failed: {
     icon: LuX,
-    colorScheme: 'red',
+    colorPalette: 'red',
     label: 'Failed'
   },
   processing: {
     icon: LuRefreshCw,
-    colorScheme: 'blue',
+    colorPalette: 'blue',
     label: 'Processing'
   },
   pending: {
     icon: LuClock,
-    colorScheme: 'gray',
+    colorPalette: 'gray',
     label: 'Pending'
   }
 };
@@ -65,96 +65,112 @@ export default function ImportCard({ task, onReview, onMarkAsViewed }) {
     <Box
       className="import-card"
       borderWidth="1px"
+      borderLeftWidth={!task.viewed ? "4px" : "1px"}
+      borderLeftColor={!task.viewed ? "blue.500" : "gray.200"}
       borderRadius="md"
-      p={4}
-      bg={task.viewed ? 'gray.50' : 'white'}
-      position="relative"
+      bg="white"
+      boxShadow={!task.viewed ? "sm" : "none"}
+      overflow="hidden"
+      transition="all 0.2s"
+      _hover={{ boxShadow: "md" }}
     >
-      <HStack justifyContent="space-between" alignItems="flex-start">
-        
-        {/* Left side: Info */}
-        <VStack alignItems="flex-start" gap={2} flex="1">
-          
-          {/* Header row: Type badge + Status badge */}
-          <HStack gap={2}>
-            <Badge colorScheme="blue" variant="subtle">
-              {TYPE_LABELS[task.task_type] || task.task_type}
-            </Badge>
-            
-            <Badge colorScheme={statusConfig.colorScheme} variant="subtle">
-              <HStack gap={1}>
-                <StatusIcon size={14} />
-                <span>{statusConfig.label}</span>
-              </HStack>
-            </Badge>
-          </HStack>
-
-          {/* Source info */}
-          <Text fontSize="sm" fontWeight="medium" color="gray.700">
-            {getSourceInfo()}
-          </Text>
-
-          {/* Date */}
-          <Text fontSize="xs" color="gray.500">
-            {formatDate(task.created_at)}
-          </Text>
-
-          {/* Results (for completed tasks) */}
-          {task.status === 'completed' && hasWords && (
-            <HStack gap={4} fontSize="sm">
-              <Text>
-                <strong>{wordsCount}</strong> {wordsCount === 1 ? 'word' : 'words'}
-              </Text>
-              <Text color="gray.600">
-                Language: <strong>{languageName}</strong>
-              </Text>
+      {/* Header: Status + Type + Date */}
+      <HStack
+        justifyContent="space-between"
+        alignItems="center"
+        px={4}
+        py={3}
+        bg={task.viewed ? 'gray.50' : 'blue.50'}
+        borderBottom="1px solid"
+        borderColor="gray.200"
+      >
+        <HStack gap={3}>
+          <Badge 
+            colorPalette={statusConfig.colorPalette} 
+            variant="solid"
+            fontSize="xs"
+          >
+            <HStack gap={1}>
+              <StatusIcon size={12} />
+              <span>{statusConfig.label}</span>
             </HStack>
-          )}
+          </Badge>
+          
+          <Text fontSize="sm" fontWeight="medium" color="gray.700">
+            {TYPE_LABELS[task.task_type] || task.task_type}
+          </Text>
+        </HStack>
+        
+        <Text fontSize="xs" color="gray.500">
+          {formatDate(task.created_at)}
+        </Text>
+      </HStack>
 
-          {/* Error message (for failed tasks) */}
-          {task.status === 'failed' && task.error_message && (
-            <Text fontSize="sm" color="red.600" maxWidth="500px">
+      {/* Content */}
+      <VStack alignItems="stretch" gap={3} p={4}>
+        {/* Source info - prominent */}
+        <Text fontSize="md" fontWeight="semibold" color="gray.800">
+          {getSourceInfo()}
+        </Text>
+
+        {/* Results (for completed tasks) */}
+        {task.status === 'completed' && hasWords && (
+          <HStack gap={3} fontSize="sm" color="gray.600">
+            <HStack gap={1}>
+              <Text>📚</Text>
+              <Text fontWeight="medium">{wordsCount}</Text>
+              <Text>{wordsCount === 1 ? 'word' : 'words'}</Text>
+            </HStack>
+            <Text color="gray.400">•</Text>
+            <HStack gap={1}>
+              <Text>🌐</Text>
+              <Text fontWeight="medium">{languageName}</Text>
+            </HStack>
+          </HStack>
+        )}
+
+        {/* Processing indicator */}
+        {task.status === 'processing' && (
+          <HStack gap={2} fontSize="sm" color="blue.600">
+            <LuRefreshCw className="spinning-icon" size={16} />
+            <Text fontWeight="medium">Processing...</Text>
+          </HStack>
+        )}
+
+        {/* Error message (for failed tasks) */}
+        {task.status === 'failed' && task.error_message && (
+          <Box bg="red.50" p={3} borderRadius="md" borderLeft="3px solid" borderColor="red.500">
+            <Text fontSize="sm" color="red.700" fontWeight="medium">
               Error: {task.error_message}
             </Text>
-          )}
-        </VStack>
+          </Box>
+        )}
 
-        {/* Right side: Actions */}
-        <VStack gap={2} alignItems="flex-end" justifyContent="space-between" minHeight="100px">
-          {/* Top: Mark as viewed button */}
-          {task.status === 'completed' && (
-            <Button
-              variant="solid"
-              colorScheme="blue"
-              size="sm"
-              onClick={() => onMarkAsViewed(task.id)}
-            >
-              Mark as viewed
-            </Button>
-          )}
-          
-          {task.status === 'processing' && (
-            <Badge colorScheme="blue" variant="outline">
-              <HStack gap={1}>
-                <LuRefreshCw className="spinning-icon" size={12} />
-                <span>In Progress</span>
-              </HStack>
-            </Badge>
-          )}
-          
-          {/* Bottom: Review Words button (only if has words) */}
-          {task.status === 'completed' && hasWords && (
-            <Button
-              variant="solid"
-              colorScheme="blue"
-              size="sm"
-              onClick={() => onReview(task)}
-            >
-              Review Words
-            </Button>
-          )}
-        </VStack>
-      </HStack>
+        {/* Actions */}
+        {task.status === 'completed' && (hasWords || !task.viewed) && (
+          <HStack gap={2} mt={2}>
+            {hasWords && (
+              <Button
+                colorPalette="blue"
+                size="md"
+                onClick={() => onReview(task)}
+              >
+                Review Words →
+              </Button>
+            )}
+            
+            {!task.viewed && (
+              <Button
+                variant="outline"
+                size="md"
+                onClick={() => onMarkAsViewed(task.id)}
+              >
+                Mark as viewed
+              </Button>
+            )}
+          </HStack>
+        )}
+      </VStack>
     </Box>
   );
 }

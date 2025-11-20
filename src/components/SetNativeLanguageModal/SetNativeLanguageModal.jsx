@@ -90,7 +90,7 @@ export default function SetNativeLanguageModal({ isOpen, onLanguageSet }) {
           <Dialog.Footer justifyContent="center">
             <Button
               onClick={handleSubmit}
-              colorScheme="blue"
+              colorPalette="blue"
               size="lg"
               disabled={!selectedLanguage}
               loading={isLoading}

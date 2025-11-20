@@ -60,7 +60,7 @@ export default function UnviewedImportsBadge() {
       transition="background 0.2s"
     >
       <LuClock size={20} color="#3182ce" />
-      <Badge colorScheme="blue" variant="solid" fontSize="xs">
+      <Badge colorPalette="blue" variant="solid" fontSize="xs">
         {count}
       </Badge>
     </Box>

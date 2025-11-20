@@ -1,6 +1,12 @@
 .vocabularies-list-container {
 }
 
+.vocabularies-header {
+  display: flex;
+  justify-content: flex-start;
+  margin-bottom: 2rem;
+}
+
 .vocabularies-grid {
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
@@ -9,6 +15,7 @@
 }
 
 .vocabulary-card {
+  position: relative;
   padding: 1.5rem;
   border: 1px solid #e2e8f0;
   border-radius: 8px;
@@ -23,11 +30,37 @@
   border-color: #4299e1;
 }
 
+.vocabulary-delete-btn {
+  position: absolute;
+  top: 0.75rem;
+  right: 0.75rem;
+  background: transparent;
+  border: none;
+  color: #a0aec0;
+  font-size: 1.5rem;
+  cursor: pointer;
+  padding: 0.25rem;
+  line-height: 1;
+  transition: all 0.2s ease;
+  width: 28px;
+  height: 28px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 4px;
+}
+
+.vocabulary-delete-btn:hover {
+  background: #fed7d7;
+  color: #e53e3e;
+}
+
 .vocabulary-card-name {
   font-size: 1.25rem;
   font-weight: 600;
   margin-bottom: 0.5rem;
   color: #2d3748;
+  padding-right: 2rem;
 }
 
 .vocabulary-card-languages {
@@ -68,5 +101,9 @@
   text-align: center;
   padding: 4rem 2rem;
   color: #718096;
+}
+
+.loading-text {
+  margin-top: 1rem;
 }
 

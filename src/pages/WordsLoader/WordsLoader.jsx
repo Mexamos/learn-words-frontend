@@ -57,11 +57,27 @@ export default function WordsLoader() {
       let result;
       
       if (selectorValue.includes('youtube')) {
+        // Валидация URL
+        if (!url || url.trim() === '') {
+          toast.error('Please enter a YouTube URL');
+          setSubmitIsLoading(false);
+          return;
+        }
+        
         console.log('📺 [WordsLoader] YouTube import initiated for URL:', url);
         
         // Извлекаем video_id из URL
         const videoIdMatch = url.match(/(?:v=|youtu\.be\/)([a-zA-Z0-9_-]{11})/);
         const videoId = videoIdMatch ? videoIdMatch[1] : null;
+        
+        // Валидация формата URL
+        if (!videoId) {
+          toast.error('Invalid YouTube URL', {
+            description: 'Please enter a valid YouTube video URL'
+          });
+          setSubmitIsLoading(false);
+          return;
+        }
         
         console.log('🔍 [WordsLoader] Extracted video ID:', videoId);
         

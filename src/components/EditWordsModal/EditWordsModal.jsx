@@ -165,7 +165,7 @@ export default function EditWordsModal({ isOpen, onClose, onSave, words }) {
                     Cancel
                   </Button>
                 </DialogActionTrigger>
-                <Button colorScheme="blue" onClick={handleSave} disabled={isSaving}>
+                <Button colorPalette="blue" onClick={handleSave} disabled={isSaving}>
                   {isSaving ? (
                     <>
                       <Spinner size="sm" mr={2} /> Saving...

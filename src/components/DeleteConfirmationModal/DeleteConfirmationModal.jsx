@@ -47,7 +47,7 @@ export default function DeleteConfirmationModal({ isOpen, onClose, onConfirm, wo
                 </Button>
               </DialogActionTrigger>
               <Button
-                colorScheme="red"
+                colorPalette="red"
                 onClick={handleConfirm}
                 disabled={isDeleting}
               >

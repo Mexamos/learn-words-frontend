@@ -235,7 +235,7 @@ export default function WordSelectionModal({ isOpen, onClose, words = [], langua
             <Dialog.Footer justifyContent="center">
               <Button
                 onClick={handleSubmit}
-                colorScheme="blue"
+                colorPalette="blue"
                 size="lg"
                 disabled={selectedWords.size === 0}
               >

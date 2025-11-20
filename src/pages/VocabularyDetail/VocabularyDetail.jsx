@@ -6,11 +6,13 @@ import { toast } from 'sonner'
 import Layout from '../../components/Layout/Layout'
 import DeleteConfirmationModal from '../../components/DeleteConfirmationModal/DeleteConfirmationModal'
 import EditWordsModal from '../../components/EditWordsModal/EditWordsModal'
+import AddWordsModal from '../../components/AddWordsModal/AddWordsModal'
 import {
   getVocabularyWithStats,
   getWordsPaginated,
   deleteWordsBatch,
-  updateWordsBatch
+  updateWordsBatch,
+  addWordsWithTranslations
 } from '../../services/wordsService'
 import { LANGUAGE_NAMES } from '../../constants/languages'
 
@@ -29,6 +31,7 @@ export default function VocabularyDetail() {
   const [isLoading, setIsLoading] = useState(true)
   const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false)
   const [isEditModalOpen, setIsEditModalOpen] = useState(false)
+  const [isAddModalOpen, setIsAddModalOpen] = useState(false)
 
   // Debounce search input
   useEffect(() => {
@@ -126,6 +129,19 @@ export default function VocabularyDetail() {
     }
   }
 
+  const handleAddWords = async (wordsWithTranslations) => {
+    try {
+      const createdWords = await addWordsWithTranslations(id, wordsWithTranslations)
+      toast.success(`${createdWords.length} word(s) added successfully`)
+      fetchWords() // Refresh the list
+      setIsAddModalOpen(false)
+    } catch (error) {
+      console.error('Failed to add words:', error)
+      toast.error('Failed to add words')
+      throw error
+    }
+  }
+
   const getLanguageName = (code) => {
     return LANGUAGE_NAMES[code] || code.toUpperCase()
   }
@@ -164,7 +180,14 @@ export default function VocabularyDetail() {
           />
           <div className="actions-group">
             <Button
-              colorScheme="red"
+              colorPalette="blue"
+              size="sm"
+              onClick={() => setIsAddModalOpen(true)}
+            >
+              Add Words
+            </Button>
+            <Button
+              colorPalette="red"
               size="sm"
               disabled={selectedWordIds.size === 0}
               onClick={() => setIsDeleteModalOpen(true)}
@@ -172,7 +195,7 @@ export default function VocabularyDetail() {
               Delete {selectedWordIds.size > 0 ? `(${selectedWordIds.size})` : ''}
             </Button>
             <Button
-              colorScheme="blue"
+              colorPalette="blue"
               size="sm"
               disabled={selectedWordIds.size === 0}
               onClick={() => setIsEditModalOpen(true)}
@@ -185,7 +208,7 @@ export default function VocabularyDetail() {
         {isLoading ? (
           <div className="loading-state">
             <Spinner size="xl" />
-            <p style={{ marginTop: '1rem' }}>Loading words...</p>
+            <p className="loading-text">Loading words...</p>
           </div>
         ) : words.length === 0 ? (
           <div className="empty-state">
@@ -298,6 +321,13 @@ export default function VocabularyDetail() {
           onClose={() => setIsEditModalOpen(false)}
           onSave={handleUpdateWords}
           words={selectedWords}
+        />
+
+        <AddWordsModal
+          isOpen={isAddModalOpen}
+          onClose={() => setIsAddModalOpen(false)}
+          onAdd={handleAddWords}
+          vocabulary={vocabulary}
         />
       </div>
     </Layout>
