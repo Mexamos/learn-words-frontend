@@ -16,3 +16,7 @@
   flex-direction: column;
   padding: 2rem;
 }
+
+.layout-main-full {
+  padding: 0;
+}

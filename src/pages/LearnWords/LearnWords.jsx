@@ -7,14 +7,18 @@ import Layout from '../../components/Layout/Layout'
 import FlipCard from '../../components/FlipCard/FlipCard'
 import Congratulations from '../../components/Congratulations/Congratulations'
 import { getVocabularies, getAllWords } from '../../services/wordsService'
+import { getLearningModes, createLearningLog } from '../../services/learningService'
 import { LANGUAGE_NAMES } from '../../constants/languages'
 import { LEARNING_MODES } from './constants'
 
 export default function LearnWords() {
   const navigate = useNavigate()
   const [vocabularies, setVocabularies] = useState([])
+  const [learningModes, setLearningModes] = useState([])
   const [selectedMode, setSelectedMode] = useState(LEARNING_MODES.WORD_TO_TRANSLATION.value)
+  const [selectedModeId, setSelectedModeId] = useState(null)
   const [selectedVocabulary, setSelectedVocabulary] = useState([])
+  const [wordCount, setWordCount] = useState(10)
   const [isLoading, setIsLoading] = useState(true)
   const [isLearning, setIsLearning] = useState(false)
   const [showCongratulations, setShowCongratulations] = useState(false)
@@ -23,6 +27,7 @@ export default function LearnWords() {
 
   useEffect(() => {
     fetchVocabularies()
+    fetchLearningModes()
   }, [])
 
   const fetchVocabularies = async () => {
@@ -38,6 +43,28 @@ export default function LearnWords() {
       toast.error('Failed to load vocabularies')
     } finally {
       setIsLoading(false)
+    }
+  }
+
+  const fetchLearningModes = async () => {
+    try {
+      const modes = await getLearningModes()
+      setLearningModes(modes)
+      if (modes.length > 0) {
+        // Set default mode
+        const defaultMode = modes.find(m => m.code === LEARNING_MODES.WORD_TO_TRANSLATION.value) || modes[0]
+        setSelectedMode(defaultMode.code)
+        setSelectedModeId(defaultMode.id)
+      }
+    } catch (error) {
+      console.error('Failed to fetch learning modes:', error)
+      toast.error('Failed to load learning modes')
+      // Fallback to hardcoded modes
+      setLearningModes([
+        { id: 1, code: LEARNING_MODES.WORD_TO_TRANSLATION.value, name: LEARNING_MODES.WORD_TO_TRANSLATION.label },
+        { id: 2, code: LEARNING_MODES.TRANSLATION_TO_WORD.value, name: LEARNING_MODES.TRANSLATION_TO_WORD.label }
+      ])
+      setSelectedModeId(1)
     }
   }
 
@@ -58,16 +85,28 @@ export default function LearnWords() {
 
     try {
       setIsLoading(true)
-      const allWords = await getAllWords(parseInt(selectedVocabulary[0]))
+      const selectedCount = Math.max(1, parseInt(wordCount) || 10)
       
-      if (allWords.length === 0) {
-        toast.error('No words in this vocabulary')
+      // Request more words than needed for better randomization (2x)
+      // This ensures we have variety even after shuffling
+      const requestLimit = selectedCount * 2
+      
+      // Exclude words already learned today
+      const fetchedWords = await getAllWords(parseInt(selectedVocabulary[0]), requestLimit, true)
+      
+      if (fetchedWords.length === 0) {
+        toast.info('No new words available today. You\'ve already learned all words from this vocabulary today!')
         setIsLoading(false)
         return
       }
 
-      const shuffled = shuffleArray(allWords)
-      setWords(shuffled)
+      // Shuffle the fetched words
+      const shuffled = shuffleArray(fetchedWords)
+      
+      // Take only the requested amount (or all if less available)
+      const limitedWords = shuffled.slice(0, Math.min(selectedCount, shuffled.length))
+      
+      setWords(limitedWords)
       setCurrentIndex(0)
       setIsLearning(true)
     } catch (error) {
@@ -91,12 +130,25 @@ export default function LearnWords() {
     }
   }
 
-  const handleNext = () => {
+  const handleNext = async () => {
     if (currentIndex < words.length - 1) {
       setCurrentIndex((prev) => prev + 1)
     } else {
-      // Last word - show congratulations
-      setShowCongratulations(true)
+      // Last word - create learning log then show congratulations
+      try {
+        const wordIds = words.map(w => w.id)
+        await createLearningLog(
+          parseInt(selectedVocabulary[0]), 
+          selectedModeId,
+          wordIds
+        )
+        setShowCongratulations(true)
+      } catch (error) {
+        console.error('Failed to create learning log:', error)
+        // Still show congratulations even if logging fails
+        toast.error('Failed to save learning progress, but great job learning!')
+        setShowCongratulations(true)
+      }
     }
   }
 
@@ -133,7 +185,7 @@ export default function LearnWords() {
   if (isLearning && words.length > 0) {
     if (showCongratulations) {
       return (
-        <Layout pageTitle="Learn Words">
+        <Layout pageTitle="Learn Words" fullWidth={true}>
           <Congratulations 
             wordCount={words.length} 
             onClose={handleCongratulationsClose}
@@ -143,7 +195,6 @@ export default function LearnWords() {
     }
 
     const isFirstWord = currentIndex === 0
-    const isLastWord = currentIndex === words.length - 1
 
     return (
       <Layout pageTitle="Learn Words">
@@ -233,24 +284,20 @@ export default function LearnWords() {
               <div className="form-group">
                 <label className="form-label">Select Learning Mode</label>
                 <div className="radio-group">
-                  <label className="radio-option">
-                    <input
-                      type="radio"
-                      value={LEARNING_MODES.WORD_TO_TRANSLATION.value}
-                      checked={selectedMode === LEARNING_MODES.WORD_TO_TRANSLATION.value}
-                      onChange={(e) => setSelectedMode(e.target.value)}
-                    />
-                    <span>{LEARNING_MODES.WORD_TO_TRANSLATION.label}</span>
-                  </label>
-                  <label className="radio-option">
-                    <input
-                      type="radio"
-                      value={LEARNING_MODES.TRANSLATION_TO_WORD.value}
-                      checked={selectedMode === LEARNING_MODES.TRANSLATION_TO_WORD.value}
-                      onChange={(e) => setSelectedMode(e.target.value)}
-                    />
-                    <span>{LEARNING_MODES.TRANSLATION_TO_WORD.label}</span>
-                  </label>
+                  {learningModes.map((mode) => (
+                    <label key={mode.id} className="radio-option">
+                      <input
+                        type="radio"
+                        value={mode.code}
+                        checked={selectedMode === mode.code}
+                        onChange={(e) => {
+                          setSelectedMode(e.target.value)
+                          setSelectedModeId(mode.id)
+                        }}
+                      />
+                      <span>{mode.name}</span>
+                    </label>
+                  ))}
                 </div>
               </div>
 
@@ -284,6 +331,26 @@ export default function LearnWords() {
                     </Select.Positioner>
                   </Portal>
                 </Select.Root>
+              </div>
+
+              <div className="form-group">
+                <label className="form-label" htmlFor="word-count-input">
+                  Number of Words
+                </label>
+                <input
+                  id="word-count-input"
+                  type="number"
+                  className="word-count-input"
+                  min="1"
+                  value={wordCount}
+                  onChange={(e) => {
+                    setWordCount(e.target.value)
+                  }}
+                  onBlur={(e) => {
+                    setWordCount(Math.max(1, parseInt(e.target.value) || 1))
+                  }}
+                  placeholder="Enter number of words"
+                />
               </div>
 
               <button className="start-button" onClick={handleStartLearning}>

@@ -169,7 +169,7 @@ export default function VocabularyDetail() {
               disabled={selectedWordIds.size === 0}
               onClick={() => setIsDeleteModalOpen(true)}
             >
-              Delete ({selectedWordIds.size})
+              Delete {selectedWordIds.size > 0 ? `(${selectedWordIds.size})` : ''}
             </Button>
             <Button
               colorScheme="blue"
@@ -177,7 +177,7 @@ export default function VocabularyDetail() {
               disabled={selectedWordIds.size === 0}
               onClick={() => setIsEditModalOpen(true)}
             >
-              Edit ({selectedWordIds.size})
+              Edit {selectedWordIds.size > 0 ? `(${selectedWordIds.size})` : ''}
             </Button>
           </div>
         </div>

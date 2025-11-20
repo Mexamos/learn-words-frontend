@@ -3,7 +3,7 @@ import './SideMenu.css'
 
 /**
  * SideMenu component
- * @param {Array<{label: string, path: string}>} items - Menu items
+ * @param {Array<{label: string, path: string, badge?: number}>} items - Menu items
  * @param {boolean} isVisible - Whether the side menu is visible
  * @param {function} onCollapse - Callback to collapse/hide the side menu
  */
@@ -36,7 +36,10 @@ export default function SideMenu({ items, isVisible, onCollapse }) {
                 to={item.path}
                 className="menu-link"
               >
-                {item.label}
+                <span className="menu-link-label">{item.label}</span>
+                {item.badge !== undefined && item.badge > 0 && (
+                  <span className="menu-link-badge">{item.badge}</span>
+                )}
               </NavLink>
             </li>
           ))}

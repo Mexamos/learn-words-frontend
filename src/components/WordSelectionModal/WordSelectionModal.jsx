@@ -16,7 +16,7 @@ import { getVocabularies, createVocabulary, addWordsBatch } from '../../services
 import { LANGUAGE_NAMES, DEFAULT_NATIVE_LANGUAGE } from '../../constants/languages';
 import './WordSelectionModal.css';
 
-export default function WordSelectionModal({ isOpen, onClose, words = [], language }) {
+export default function WordSelectionModal({ isOpen, onClose, words = [], language, taskId = null }) {
   const [selectedWords, setSelectedWords] = useState(new Set(words));
   const [isLoading, setIsLoading] = useState(false);
 

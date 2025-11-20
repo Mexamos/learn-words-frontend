@@ -1,0 +1,25 @@
+/* ImportsHistory page styles */
+
+.import-card {
+  transition: transform 0.15s ease, box-shadow 0.15s ease;
+}
+
+.import-card:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+}
+
+/* Spinning animation for loader icon */
+.spinning-icon {
+  animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+  from {
+    transform: rotate(0deg);
+  }
+  to {
+    transform: rotate(360deg);
+  }
+}
+

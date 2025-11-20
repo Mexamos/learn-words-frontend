@@ -1,7 +1,7 @@
 import './EditWordsModal.css'
 import { useState, useEffect } from 'react'
 import { DialogRoot, DialogBackdrop, DialogPositioner, DialogContent, DialogHeader, DialogTitle, DialogBody, DialogActionTrigger } from '../ui/dialog'
-import { Button, Spinner, HStack } from '@chakra-ui/react'
+import { Button, Spinner, HStack, NativeSelect } from '@chakra-ui/react'
 
 const WORD_STATUSES = [
   { value: 'new', label: 'New' },
@@ -117,18 +117,20 @@ export default function EditWordsModal({ isOpen, onClose, onSave, words }) {
 
                   <div>
                     <label className="edit-word-label">Status</label>
-                    <select
-                      className="edit-word-select"
-                      value={word.status}
-                      onChange={(e) => handleFieldChange(index, 'status', e.target.value)}
-                      disabled={isSaving}
-                    >
-                      {WORD_STATUSES.map((status) => (
-                        <option key={status.value} value={status.value}>
-                          {status.label}
-                        </option>
-                      ))}
-                    </select>
+                    <NativeSelect.Root size="md" width="100%" bg="white">
+                      <NativeSelect.Field
+                        value={word.status}
+                        onChange={(e) => handleFieldChange(index, 'status', e.target.value)}
+                        disabled={isSaving}
+                      >
+                        {WORD_STATUSES.map((status) => (
+                          <option key={status.value} value={status.value}>
+                            {status.label}
+                          </option>
+                        ))}
+                      </NativeSelect.Field>
+                      <NativeSelect.Indicator />
+                    </NativeSelect.Root>
                   </div>
 
                   <div>

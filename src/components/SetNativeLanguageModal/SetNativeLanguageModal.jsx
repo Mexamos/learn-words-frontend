@@ -6,8 +6,7 @@ import {
   Text,
   VStack,
   Heading,
-  NativeSelectRoot,
-  NativeSelectField
+  NativeSelect
 } from '@chakra-ui/react';
 import { toast } from 'sonner';
 import { AVAILABLE_LANGUAGES, DEFAULT_NATIVE_LANGUAGE } from '../../constants/languages';
@@ -70,8 +69,8 @@ export default function SetNativeLanguageModal({ isOpen, onLanguageSet }) {
                 <Text fontSize="sm" fontWeight="medium" mb={2}>
                   Select Your Native Language
                 </Text>
-                <NativeSelectRoot size="lg" width="100%">
-                  <NativeSelectField
+                <NativeSelect.Root size="lg" width="100%" bg="white">
+                  <NativeSelect.Field
                     value={selectedLanguage}
                     onChange={handleLanguageChange}
                     disabled={isLoading}
@@ -81,8 +80,9 @@ export default function SetNativeLanguageModal({ isOpen, onLanguageSet }) {
                         {language.label}
                       </option>
                     ))}
-                  </NativeSelectField>
-                </NativeSelectRoot>
+                  </NativeSelect.Field>
+                  <NativeSelect.Indicator />
+                </NativeSelect.Root>
               </Box>
             </VStack>
           </Dialog.Body>

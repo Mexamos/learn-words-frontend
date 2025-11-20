@@ -86,7 +86,8 @@
   font-size: 0.95rem;
 }
 
-.vocabulary-select {
+.vocabulary-select,
+.word-count-input {
   width: 100%;
   padding: 0.75rem;
   border: 2px solid #e2e8f0;
@@ -94,18 +95,29 @@
   font-size: 0.95rem;
   color: #2d3748;
   background-color: white;
-  cursor: pointer;
   transition: border-color 0.15s ease;
 }
 
-.vocabulary-select:hover {
+.vocabulary-select {
+  cursor: pointer;
+}
+
+.vocabulary-select:hover,
+.word-count-input:hover {
   border-color: #cbd5e0;
 }
 
-.vocabulary-select:focus {
+.vocabulary-select:focus,
+.word-count-input:focus {
   outline: none;
   border-color: #4299e1;
   box-shadow: 0 0 0 3px rgba(66, 153, 225, 0.1);
+}
+
+.word-count-input::-webkit-inner-spin-button,
+.word-count-input::-webkit-outer-spin-button {
+  opacity: 1;
+  height: 40px;
 }
 
 .start-button {

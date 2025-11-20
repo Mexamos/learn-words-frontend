@@ -1,10 +1,12 @@
 import './WordsLoader.css'
 import { useState } from 'react'
+import { useNavigate } from 'react-router-dom'
 import { 
   Select, Portal, createListCollection, Button
 } from '@chakra-ui/react';
 import { toast } from 'sonner';
-import { importFromYoutube, importFromVideoOcr, importFromImagesOcr } from '../../services/wordsService'
+import { importFromVideoOcr, importFromImagesOcr, startYoutubeImport, pollTaskCompletion, checkVideoImportStatus } from '../../services/wordsService'
+import { useTasks } from '../../contexts/TasksContext'
 import Layout from '../../components/Layout/Layout'
 import YouTubeImportForm from './components/YouTubeImportForm'
 import VideoOcrImportForm from './components/VideoOcrImportForm'
@@ -12,8 +14,10 @@ import ImageOcrImportForm from './components/ImageOcrImportForm'
 import ImageUrlImportForm from './components/ImageUrlImportForm'
 import WordSelectionModal from '../../components/WordSelectionModal/WordSelectionModal'
 import { IMPORT_SOURCES } from './constants'
+import { showImportCompletedToast } from '../../utils/importNotifications'
 
 export default function WordsLoader() {
+  const navigate = useNavigate();
   const [selectorValue, setSelectorValue] = useState([])
   const [url, setUrl] = useState('')
   const [files, setFiles] = useState([])
@@ -23,6 +27,9 @@ export default function WordsLoader() {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [modalWords, setModalWords] = useState([]);
   const [modalLanguage, setModalLanguage] = useState('');
+  
+  // Подключаем TasksContext
+  const { hasActiveTaskForVideo, addTask, removeTask } = useTasks();
 
   const sources = createListCollection({
     items: IMPORT_SOURCES,
@@ -45,10 +52,118 @@ export default function WordsLoader() {
   const handleSubmit = async (e) => {
     e.preventDefault();
     setSubmitIsLoading(true);
+    
     try {
       let result;
       
-      if (selectorValue.includes('text-on-video-file')) {
+      if (selectorValue.includes('youtube')) {
+        console.log('📺 [WordsLoader] YouTube import initiated for URL:', url);
+        
+        // Извлекаем video_id из URL
+        const videoIdMatch = url.match(/(?:v=|youtu\.be\/)([a-zA-Z0-9_-]{11})/);
+        const videoId = videoIdMatch ? videoIdMatch[1] : null;
+        
+        console.log('🔍 [WordsLoader] Extracted video ID:', videoId);
+        
+        // Проверяем, нет ли уже активной задачи для этого видео
+        if (videoId && hasActiveTaskForVideo(videoId)) {
+          console.warn('⚠️ [WordsLoader] Video is already being processed:', videoId);
+          toast.info('Video is already being processed', {
+            description: 'Please wait for the current task to complete',
+            duration: 5000
+          });
+          setSubmitIsLoading(false);
+          return;
+        }
+        
+        // Проверяем, был ли этот импорт уже просмотрен
+        if (videoId) {
+          const importStatus = await checkVideoImportStatus(videoId);
+          if (importStatus.imported && importStatus.viewed) {
+            console.log('ℹ️ [WordsLoader] Video already imported and viewed:', videoId);
+            toast.info('Already processed', {
+              description: 'This video has been imported and reviewed before.',
+              duration: 4000
+            });
+            setSubmitIsLoading(false);
+            return;
+          }
+        }
+        
+        // Создаем задачу
+        const startResponse = await startYoutubeImport({ url });
+        
+        // Если из кэша - показываем модальное окно сразу
+        if (startResponse.cached && startResponse.words) {
+          console.log('✅ [WordsLoader] Loaded from cache:', {
+            wordsCount: startResponse.words.length,
+            language: startResponse.language
+          });
+          
+          result = {
+            words: startResponse.words,
+            language: startResponse.language,
+            cached: true
+          };
+          
+          // Открываем модальное окно со словами
+          setModalWords(result.words);
+          setModalLanguage(result.language);
+          setIsModalOpen(true);
+          setUrl('');
+          setSubmitIsLoading(false);
+          return;
+        } else {
+          // Новая задача - регистрируем в TasksContext и делаем быстрый локальный polling
+          const taskId = startResponse.task_id;
+          
+          console.log('⏳ [WordsLoader] Task created:', taskId);
+          
+          // 1. Добавляем задачу в TasksContext для фонового отслеживания
+          //    (на случай если пользователь закроет страницу или polling прервется)
+          addTask({
+            id: taskId,
+            task_type: 'youtube',
+            status: 'pending',
+            input_params: { video_id: videoId }
+          });
+          
+          toast.success('Video submitted!', {
+            description: 'Processing... You\'ll be notified when ready to review.',
+            duration: 4000
+          });
+          
+          // 2. Запускаем быстрый локальный polling (2s интервал)
+          //    Пока пользователь на странице - быстрая обратная связь
+          try {
+            result = await pollTaskCompletion(taskId);
+            
+            console.log('🎉 [WordsLoader] Local polling completed:', {
+              wordsCount: result.words?.length,
+              language: result.language
+            });
+            
+            // Успешно дождались - убираем из TasksContext 
+            // (чтобы не было дублирующего уведомления)
+            removeTask(taskId);
+            
+            showImportCompletedToast(result, () => navigate('/imports'));
+            
+            setUrl('');
+            setSubmitIsLoading(false);
+            return;
+            
+          } catch (error) {
+            // Если локальный polling прервался (timeout, закрытие страницы)
+            // TasksContext продолжит фоновое отслеживание (15s интервал)
+            console.log('⏸️ [WordsLoader] Local polling interrupted, TasksContext will continue');
+            setUrl('');
+            setSubmitIsLoading(false);
+            return;
+          }
+        }
+        
+      } else if (selectorValue.includes('text-on-video-file')) {
         if (!files || files.length === 0) {
           toast.error('Please select a video file');
           return;
@@ -61,6 +176,7 @@ export default function WordsLoader() {
           videoFile: files[0],
           language: selectedLanguage[0]
         });
+        
       } else if (selectorValue.includes('images-ocr')) {
         if (!imageFiles || imageFiles.length === 0) {
           toast.error('Please select at least one image file');
@@ -78,8 +194,7 @@ export default function WordsLoader() {
           imageFiles: imageFiles,
           language: selectedLanguage[0]
         });
-      } else if (selectorValue.includes('youtube')) {
-        result = await importFromYoutube({ source: selectorValue, url, files });
+        
       } else if (selectorValue.includes('url-images-with-text')) {
         toast.error('There is no handler for this source');
         return;
@@ -99,39 +214,36 @@ export default function WordsLoader() {
       } else {
         toast.error('No words found in the import');
       }
+      
     } catch (error) {
       const errorCode = error.response?.data?.detail?.code;
-      const errorTitle = error.response?.data?.detail?.title || 'Something went wrong';
-      const errorMessage = error.response?.data?.detail?.message || String(error);
+      const errorTitle = error.response?.data?.detail?.title || 'Import failed';
+      const errorMessage = error.response?.data?.detail?.message || error.message || String(error);
       
-      if (errorCode === 'VIDEO_TOO_LONG_FOR_PLAN' || errorCode === 'NO_TEXT_FOUND' || errorCode === 'INVALID_FRAME_INTERVAL') {
-        toast.error(
-          errorTitle,
-          {
-            description: errorMessage,
-            duration: 20000,
-            closeButton: true,
-          }
-        );
-        setUrl('');
-      } else {
-        console.error('Error submitting words:', error);
-        toast.error(
-          errorTitle,
-          {
-            description: errorMessage,
-            duration: 5000,
-            closeButton: true,
-          }
-        );
-      }
+      console.error('❌ [WordsLoader] Import error:', {
+        errorCode,
+        errorTitle,
+        errorMessage,
+        fullError: error,
+        response: error.response?.data
+      });
+      
+      toast.error(errorTitle, {
+        description: errorMessage,
+        duration: 8000,
+        closeButton: true,
+      });
+      
+      setUrl('');
+      
     } finally {
+      console.log('🏁 [WordsLoader] Import process finished, loading state reset');
       setSubmitIsLoading(false);
     }
   };
 
   return (
-   <Layout pageTitle="Words loader">
+   <Layout pageTitle="Import Words">
 
         <Select.Root
           collection={sources}
@@ -201,9 +313,12 @@ export default function WordsLoader() {
             type="submit"
             variant="surface"
             loading={submitIsLoading}
-            loadingText="Submitting"
+            loadingText="Processing..."
             onClick={handleSubmit}
             mt={4}
+            width="fit-content"
+            alignSelf="flex-start"
+            disabled={submitIsLoading}
             _active={{
               transform: "scale(0.94)",
               boxShadow: "inner-lg",

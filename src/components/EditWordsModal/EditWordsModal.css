@@ -24,8 +24,7 @@
 }
 
 .edit-word-input,
-.edit-word-textarea,
-.edit-word-select {
+.edit-word-textarea {
   width: 100%;
   padding: 0.5rem;
   border: 1px solid #cbd5e0;
@@ -35,8 +34,7 @@
 }
 
 .edit-word-input:focus,
-.edit-word-textarea:focus,
-.edit-word-select:focus {
+.edit-word-textarea:focus {
   outline: none;
   border-color: #4299e1;
   box-shadow: 0 0 0 3px rgba(66, 153, 225, 0.1);
@@ -46,10 +44,6 @@
   min-height: 60px;
   resize: vertical;
   font-family: inherit;
-}
-
-.edit-word-select {
-  background-color: white;
 }
 
 .edit-words-modal-footer {
