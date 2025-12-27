@@ -32,6 +32,8 @@ export default function VocabularyDetail() {
   const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false)
   const [isEditModalOpen, setIsEditModalOpen] = useState(false)
   const [isAddModalOpen, setIsAddModalOpen] = useState(false)
+  const [singleWordToEdit, setSingleWordToEdit] = useState(null)
+  const [singleWordToDelete, setSingleWordToDelete] = useState(null)
 
   // Debounce search input
   useEffect(() => {
@@ -142,6 +144,42 @@ export default function VocabularyDetail() {
     }
   }
 
+  const handleEditSingleWord = (word) => {
+    setSingleWordToEdit(word)
+    setIsEditModalOpen(true)
+  }
+
+  const handleDeleteSingleWord = (word) => {
+    setSingleWordToDelete(word)
+    setIsDeleteModalOpen(true)
+  }
+
+  const handleSingleWordDelete = async () => {
+    try {
+      await deleteWordsBatch(id, [singleWordToDelete.id])
+      toast.success('Word deleted successfully')
+      fetchWords() // Refresh the list
+      setSingleWordToDelete(null)
+    } catch (error) {
+      console.error('Failed to delete word:', error)
+      toast.error('Failed to delete word')
+      throw error
+    }
+  }
+
+  const handleSingleWordUpdate = async (updates) => {
+    try {
+      await updateWordsBatch(id, updates)
+      toast.success('Word updated successfully')
+      fetchWords() // Refresh the list
+      setSingleWordToEdit(null)
+    } catch (error) {
+      console.error('Failed to update word:', error)
+      toast.error('Failed to update word')
+      throw error
+    }
+  }
+
   const getLanguageName = (code) => {
     return LANGUAGE_NAMES[code] || code.toUpperCase()
   }
@@ -235,9 +273,8 @@ export default function VocabularyDetail() {
                   <th>Word</th>
                   <th>Translation</th>
                   <th>Status</th>
-                  <th>Context</th>
                   <th>Examples</th>
-                  <th>Source</th>
+                  <th>Actions</th>
                 </tr>
               </thead>
               <tbody>
@@ -262,18 +299,30 @@ export default function VocabularyDetail() {
                         {word.status}
                       </span>
                     </td>
-                    <td className="truncate" title={word.context || '-'}>
-                      {word.context || '-'}
-                    </td>
                     <td 
-                      className="truncate" 
+                      className="examples-cell"
                       title={word.examples && word.examples.length > 0 ? word.examples.join(', ') : '-'}
                     >
                       {word.examples && word.examples.length > 0
-                        ? word.examples.join(', ')
+                        ? word.examples.join('\n')
                         : '-'}
                     </td>
-                    <td>{word.source_video_id || '-'}</td>
+                    <td className="actions-cell" onClick={(e) => e.stopPropagation()}>
+                      <button 
+                        className="action-btn edit-btn"
+                        onClick={() => handleEditSingleWord(word)}
+                        title="Edit word"
+                      >
+                        ✏️
+                      </button>
+                      <button 
+                        className="action-btn delete-btn"
+                        onClick={() => handleDeleteSingleWord(word)}
+                        title="Delete word"
+                      >
+                        🗑️
+                      </button>
+                    </td>
                   </tr>
                 ))}
               </tbody>
@@ -311,16 +360,22 @@ export default function VocabularyDetail() {
 
         <DeleteConfirmationModal
           isOpen={isDeleteModalOpen}
-          onClose={() => setIsDeleteModalOpen(false)}
-          onConfirm={handleDeleteWords}
-          wordCount={selectedWordIds.size}
+          onClose={() => {
+            setIsDeleteModalOpen(false)
+            setSingleWordToDelete(null)
+          }}
+          onConfirm={singleWordToDelete ? handleSingleWordDelete : handleDeleteWords}
+          wordCount={singleWordToDelete ? 1 : selectedWordIds.size}
         />
 
         <EditWordsModal
           isOpen={isEditModalOpen}
-          onClose={() => setIsEditModalOpen(false)}
-          onSave={handleUpdateWords}
-          words={selectedWords}
+          onClose={() => {
+            setIsEditModalOpen(false)
+            setSingleWordToEdit(null)
+          }}
+          onSave={singleWordToEdit ? handleSingleWordUpdate : handleUpdateWords}
+          words={singleWordToEdit ? [singleWordToEdit] : selectedWords}
         />
 
         <AddWordsModal

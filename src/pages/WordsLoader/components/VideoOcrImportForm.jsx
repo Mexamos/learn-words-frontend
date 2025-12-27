@@ -1,5 +1,5 @@
 import { 
-  Select, Portal, createListCollection, Box, VStack, FileUpload, Icon
+  Select, Portal, createListCollection, Box, VStack, FileUpload, Icon, Text
 } from '@chakra-ui/react';
 import { LuUpload } from "react-icons/lu";
 import { OCR_AVAILABLE_LANGUAGES } from '../constants';
@@ -22,6 +22,7 @@ export default function VideoOcrImportForm({
     <VStack spacing={4} mt={4} maxW="xl" alignItems="stretch">
       <FileUpload.Root 
         maxFiles={1}
+        accept="video/*"
         onFileAccept={(details) => {
           const actualFiles = details.files || details.acceptedFiles || [];
           onFilesChange(actualFiles);
@@ -41,7 +42,7 @@ export default function VideoOcrImportForm({
             <Box color="fg.muted">.mkv, .mp4, .avi, .mov</Box>
           </FileUpload.DropzoneContent>
         </FileUpload.Dropzone>
-        <FileUpload.List clearable />
+        {files.length > 0 && <FileUpload.List clearable />}
       </FileUpload.Root>
 
       <Select.Root

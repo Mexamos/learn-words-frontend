@@ -17,7 +17,6 @@ export const IMPORT_SOURCES = [
   { label: "🎥 Text on video file", value: "text-on-video-file" },
   { label: "🖼️ Upload images with text", value: "images-ocr" },
   { label: "▶️ YouTube video", value: "youtube" },
-  { label: "🔗 Link to page with images with text", value: "url-images-with-text" },
 ];
 
 

@@ -8,33 +8,41 @@ import {
   HStack,
   Spinner,
   Heading,
-  Icon
+  Icon,
+  Input
 } from '@chakra-ui/react';
 import { LuX } from 'react-icons/lu';
 import { toast } from 'sonner';
-import { getVocabularies, createVocabulary, addWordsBatch } from '../../services/wordsService';
+import { getVocabularies, createVocabulary, addWordsBatch, addWordsWithTranslations } from '../../services/wordsService';
 import { LANGUAGE_NAMES, DEFAULT_NATIVE_LANGUAGE } from '../../constants/languages';
 import './WordSelectionModal.css';
 
-export default function WordSelectionModal({ isOpen, onClose, words = [], language, taskId = null }) {
-  const [selectedWords, setSelectedWords] = useState(new Set(words));
+export default function WordSelectionModal({ isOpen, onClose, words = [], language }) {
+  const [selectedWords, setSelectedWords] = useState(new Set());
   const [isLoading, setIsLoading] = useState(false);
+  const [editableWords, setEditableWords] = useState([]);
 
   useEffect(() => {
     if (isOpen && words.length > 0) {
       setSelectedWords(new Set());
+      // Initialize editable words with original data
+      const initialEditableWords = words.map(wordObj => ({
+        word: typeof wordObj === 'string' ? wordObj : wordObj.word,
+        translation: typeof wordObj === 'object' ? wordObj.translation || '' : ''
+      }));
+      setEditableWords(initialEditableWords);
     }
   }, [isOpen, words]);
 
-  const handleWordToggle = (word) => {
+  const handleWordToggle = (index) => {
     if (isLoading) return;
     
     setSelectedWords(prev => {
       const newSet = new Set(prev);
-      if (newSet.has(word)) {
-        newSet.delete(word);
+      if (newSet.has(index)) {
+        newSet.delete(index);
       } else {
-        newSet.add(word);
+        newSet.add(index);
       }
       return newSet;
     });
@@ -42,12 +50,22 @@ export default function WordSelectionModal({ isOpen, onClose, words = [], langua
 
   const handleSelectAll = () => {
     if (isLoading) return;
-    setSelectedWords(new Set(words));
+    // Use indices instead of word texts
+    const indices = words.map((_, index) => index);
+    setSelectedWords(new Set(indices));
   };
 
   const handleDeselectAll = () => {
     if (isLoading) return;
     setSelectedWords(new Set());
+  };
+
+  const handleWordChange = (index, field, value) => {
+    setEditableWords(prev => {
+      const updated = [...prev];
+      updated[index] = { ...updated[index], [field]: value };
+      return updated;
+    });
   };
 
   const handleSubmit = async () => {
@@ -75,8 +93,26 @@ export default function WordSelectionModal({ isOpen, onClose, words = [], langua
       }
       
       // 4. Add selected words in batch
-      const wordsArray = Array.from(selectedWords);
-      const addedWords = await addWordsBatch(vocabulary.id, wordsArray);
+      const selectedWordObjs = Array.from(selectedWords).map(index => editableWords[index]);
+      
+      // Check if any selected words have translations
+      const hasTranslations = selectedWordObjs.some(wordObj => 
+        wordObj.translation && wordObj.translation.trim() !== ''
+      );
+      
+      let addedWords;
+      if (hasTranslations) {
+        // Use endpoint for words with translations
+        const wordsWithTranslations = selectedWordObjs.map(wordObj => ({
+          word: wordObj.word,
+          translation: wordObj.translation || ''
+        }));
+        addedWords = await addWordsWithTranslations(vocabulary.id, wordsWithTranslations);
+      } else {
+        // Use regular endpoint for words without translations  
+        const wordsArray = selectedWordObjs.map(wordObj => wordObj.word);
+        addedWords = await addWordsBatch(vocabulary.id, wordsArray);
+      }
       
       const addedCount = addedWords.length;
       const duplicatesCount = selectedWords.size - addedCount;
@@ -113,6 +149,7 @@ export default function WordSelectionModal({ isOpen, onClose, words = [], langua
   const handleClose = () => {
     if (!isLoading) {
       setSelectedWords(new Set());
+      setEditableWords([]);
       onClose();
     }
   };
@@ -126,7 +163,7 @@ export default function WordSelectionModal({ isOpen, onClose, words = [], langua
         <Dialog.Content maxW="600px" className="word-selection-modal">
           <Dialog.Header>
             <VStack alignItems="flex-start" gap={1}>
-              <Heading size="lg">Select Words to Learn</Heading>
+              <Heading size="lg">Select words to add to the dictionary</Heading>
               <Text fontSize="sm" color="fg.muted">
                 Detected language: <strong>{languageName}</strong>
               </Text>
@@ -179,22 +216,22 @@ export default function WordSelectionModal({ isOpen, onClose, words = [], langua
                   borderRadius="md" 
                   p={2}
                 >
-                  <VStack alignItems="stretch" gap={0}>
-                    {words.map((word, index) => {
-                      const isSelected = selectedWords.has(word);
+                  <VStack alignItems="stretch" gap={1}>
+                    {editableWords.map((wordObj, index) => {
+                      const isSelected = selectedWords.has(index);
+                      
                       return (
                         <HStack
                           key={index}
                           p={3}
                           spacing={3}
-                          cursor="pointer"
+                          alignItems="center"
                           borderRadius="md"
                           bg={isSelected ? 'blue.50' : 'transparent'}
                           transition="background 0.15s ease"
                           _hover={{
                             bg: isSelected ? 'blue.100' : 'gray.50',
                           }}
-                          onClick={() => handleWordToggle(word)}
                         >
                           <Box
                             w="20px"
@@ -208,6 +245,8 @@ export default function WordSelectionModal({ isOpen, onClose, words = [], langua
                             justifyContent="center"
                             flexShrink={0}
                             transition="all 0.15s ease"
+                            cursor="pointer"
+                            onClick={() => handleWordToggle(index)}
                           >
                             {isSelected && (
                               <Box color="white" fontSize="xs" fontWeight="bold">
@@ -215,13 +254,46 @@ export default function WordSelectionModal({ isOpen, onClose, words = [], langua
                               </Box>
                             )}
                           </Box>
-                          <Text 
-                            fontSize="md" 
+                          
+                          {/* Word input */}
+                          <Input
+                            value={wordObj.word}
+                            onChange={(e) => handleWordChange(index, 'word', e.target.value)}
+                            placeholder="Word"
+                            size="sm"
+                            variant="outline"
+                            bg="white"
+                            flex="1"
+                            minW="120px"
+                            fontSize="md"
                             fontWeight={isSelected ? 'semibold' : 'normal'}
                             color={isSelected ? 'blue.700' : 'gray.800'}
-                          >
-                            {word}
-                          </Text>
+                            borderColor={isSelected ? 'blue.300' : 'gray.300'}
+                            _focus={{
+                              borderColor: 'blue.500',
+                              boxShadow: '0 0 0 1px var(--chakra-colors-blue-500)'
+                            }}
+                          />
+                          
+                          {/* Translation input */}
+                          <Input
+                            value={wordObj.translation}
+                            onChange={(e) => handleWordChange(index, 'translation', e.target.value)}
+                            placeholder="Translation (optional)"
+                            size="sm"
+                            variant="outline"
+                            bg="white"
+                            flex="1"
+                            minW="120px"
+                            fontSize="sm"
+                            color="gray.600"
+                            fontStyle="italic"
+                            borderColor={isSelected ? 'blue.300' : 'gray.300'}
+                            _focus={{
+                              borderColor: 'blue.500',
+                              boxShadow: '0 0 0 1px var(--chakra-colors-blue-500)'
+                            }}
+                          />
                         </HStack>
                       );
                     })}

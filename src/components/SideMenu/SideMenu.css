@@ -9,10 +9,9 @@
   width: 0;
   overflow: hidden;
   transition: width 0.3s ease;
-  
 }
 .side-menu.open {
-  width: 200px;
+  min-width: 200px;
 }
 
 .side-menu-header {

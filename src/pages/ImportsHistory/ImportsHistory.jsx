@@ -46,7 +46,6 @@ export default function ImportsHistory() {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [modalWords, setModalWords] = useState([]);
   const [modalLanguage, setModalLanguage] = useState('');
-  const [selectedTaskId, setSelectedTaskId] = useState(null);
 
   const limit = 20;
 
@@ -117,7 +116,6 @@ export default function ImportsHistory() {
     
     console.log('📝 [ImportsHistory] Opening word selection modal for task:', task.id);
     
-    setSelectedTaskId(task.id);
     setModalWords(task.result.words);
     setModalLanguage(task.result.language);
     setIsModalOpen(true);
@@ -125,7 +123,6 @@ export default function ImportsHistory() {
 
   const handleModalClose = () => {
     setIsModalOpen(false);
-    setSelectedTaskId(null);
     setModalWords([]);
     setModalLanguage('');
     // Reload imports to update viewed status
@@ -293,7 +290,6 @@ export default function ImportsHistory() {
         onClose={handleModalClose}
         words={modalWords}
         language={modalLanguage}
-        taskId={selectedTaskId}
       />
     </Layout>
   );

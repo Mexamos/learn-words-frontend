@@ -155,7 +155,7 @@ export default function ImportCard({ task, onReview, onMarkAsViewed }) {
                 size="md"
                 onClick={() => onReview(task)}
               >
-                Review Words →
+                Review words →
               </Button>
             )}
             

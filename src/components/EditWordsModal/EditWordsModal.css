@@ -41,7 +41,7 @@
 }
 
 .edit-word-textarea {
-  min-height: 60px;
+  min-height: 100px;
   resize: vertical;
   font-family: inherit;
 }

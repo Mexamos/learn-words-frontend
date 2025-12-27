@@ -23,7 +23,7 @@ export default function EditWordsModal({ isOpen, onClose, onSave, words }) {
           translation: word.translation || '',
           status: word.status || 'new',
           context: word.context || '',
-          examples: Array.isArray(word.examples) ? word.examples.join(', ') : ''
+          examples: Array.isArray(word.examples) ? word.examples.join('\n') : ''
         }))
       )
     }
@@ -54,9 +54,7 @@ export default function EditWordsModal({ isOpen, onClose, onSave, words }) {
         translation: w.translation.trim(),
         status: w.status,
         context: w.context.trim() || null,
-        examples: w.examples
-          ? w.examples.split(',').map((ex) => ex.trim()).filter(Boolean)
-          : null
+        examples: w.examples ? w.examples.split('\n').map((ex) => ex.trim()).filter(Boolean) : []
       }))
       await onSave(updates)
       onClose()
@@ -134,6 +132,19 @@ export default function EditWordsModal({ isOpen, onClose, onSave, words }) {
                   </div>
 
                   <div>
+                    <label className="edit-word-label">Examples (one per line)</label>
+                    <textarea
+                      className="edit-word-textarea"
+                      value={word.examples}
+                      onChange={(e) => handleFieldChange(index, 'examples', e.target.value)}
+                      disabled={isSaving}
+                      placeholder="Example 1
+Example 2
+Example 3"
+                    />
+                  </div>
+
+                  <div>
                     <label className="edit-word-label">Context</label>
                     <textarea
                       className="edit-word-textarea"
@@ -141,17 +152,6 @@ export default function EditWordsModal({ isOpen, onClose, onSave, words }) {
                       onChange={(e) => handleFieldChange(index, 'context', e.target.value)}
                       disabled={isSaving}
                       placeholder="Optional context for this word..."
-                    />
-                  </div>
-
-                  <div>
-                    <label className="edit-word-label">Examples (comma separated)</label>
-                    <textarea
-                      className="edit-word-textarea"
-                      value={word.examples}
-                      onChange={(e) => handleFieldChange(index, 'examples', e.target.value)}
-                      disabled={isSaving}
-                      placeholder="Example 1, Example 2, Example 3"
                     />
                   </div>
                 </div>

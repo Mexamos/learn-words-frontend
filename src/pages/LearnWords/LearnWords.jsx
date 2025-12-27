@@ -90,12 +90,13 @@ export default function LearnWords() {
       // Request more words than needed for better randomization (2x)
       // This ensures we have variety even after shuffling
       const requestLimit = selectedCount * 2
-      
-      // Exclude words already learned today
-      const fetchedWords = await getAllWords(parseInt(selectedVocabulary[0]), requestLimit, true)
-      
+      let fetchedWords = await getAllWords(parseInt(selectedVocabulary[0]), requestLimit, true)
       if (fetchedWords.length === 0) {
-        toast.info('No new words available today. You\'ve already learned all words from this vocabulary today!')
+        fetchedWords = await getAllWords(parseInt(selectedVocabulary[0]), requestLimit, false)
+      }
+
+      if (fetchedWords.length === 0) {
+        toast.error('This vocabulary has no words. Please add some words first.')
         setIsLoading(false)
         return
       }
