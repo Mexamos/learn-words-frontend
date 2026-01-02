@@ -1,6 +1,3 @@
-.learn-words-container {
-}
-
 .loading-state {
   text-align: center;
   padding: 3rem 2rem;
@@ -192,7 +189,10 @@
   align-items: center;
   gap: 1rem;
   flex: 1;
-  max-width: 600px;
+}
+
+.card-wrapper > div {
+  width: 80%;
 }
 
 .nav-button {
@@ -219,6 +219,17 @@
 
 .nav-button:active {
   transform: scale(0.95);
+}
+
+.nav-button:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+  background: #a0aec0;
+}
+
+.nav-button:disabled:hover {
+  transform: none;
+  box-shadow: 0 2px 8px rgba(160, 174, 192, 0.3);
 }
 
 .nav-button-left {

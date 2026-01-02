@@ -1,0 +1,105 @@
+.select-correct-answer-container {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 2rem;
+  padding: 2rem;
+}
+
+.select-correct-answer-word {
+  font-size: 2rem;
+  font-weight: 600;
+  color: #2d3748;
+  text-align: center;
+  padding: 1.5rem 2rem;
+  background: white;
+  border-radius: 12px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+  border: 2px solid #e2e8f0;
+  min-width: 300px;
+}
+
+.select-correct-answer-options {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 1rem;
+  width: 100%;
+}
+
+.select-correct-answer-options .option {
+  padding: 1.25rem 1.5rem;
+  font-size: 1.125rem;
+  font-weight: 500;
+  border: 2px solid #e2e8f0;
+  border-radius: 8px;
+  background: white;
+  color: #2d3748;
+  cursor: pointer;
+  transition: all 0.15s ease;
+  text-align: center;
+}
+
+.select-correct-answer-options .option:hover:not(.disabled):not(.correct):not(.incorrect) {
+  border-color: #4299e1;
+  background: #ebf8ff;
+  transform: translateY(-2px);
+  box-shadow: 0 4px 8px rgba(66, 153, 225, 0.2);
+}
+
+.select-correct-answer-options .option.selected:not(.correct):not(.incorrect) {
+  border-color: #4299e1;
+  background: #ebf8ff;
+  font-weight: 600;
+}
+
+.select-correct-answer-options .option.correct, .select-correct-answer-options .option.incorrect, .select-correct-answer-options .option.disabled {
+  cursor: default;
+}
+
+.select-correct-answer-options .option.correct {
+  border-color: #48bb78;
+  background: #f0fff4;
+  color: #22543d;
+  font-weight: 600;
+}
+
+.select-correct-answer-options .option.incorrect {
+  border-color: #f56565;
+  background: #fff5f5;
+  color: #742a2a;
+  font-weight: 600;
+}
+
+.select-correct-answer-options .option.disabled {
+  cursor: not-allowed;
+  opacity: 0.6;
+}
+
+.select-correct-answer-options .option:active:not(.disabled) {
+  transform: translateY(0);
+}
+
+@media (max-width: 768px) {
+  .select-correct-answer-container {
+    padding: 1rem;
+    gap: 1.5rem;
+  }
+
+  .select-correct-answer-word {
+    font-size: 1.5rem;
+    padding: 1rem 1.5rem;
+    min-width: auto;
+    width: 100%;
+  }
+
+  .select-correct-answer-options {
+    grid-template-columns: 1fr;
+    gap: 0.75rem;
+  }
+
+  .select-correct-answer-options .option {
+    padding: 1rem;
+    font-size: 1rem;
+  }
+}
+

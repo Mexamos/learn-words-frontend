@@ -1,0 +1,142 @@
+.match-pairs-container {
+  margin: 0 auto;
+  padding: 20px;
+}
+
+.matched-section {
+  margin-bottom: 30px;
+  padding: 20px;
+  background: rgba(76, 175, 80, 0.1);
+  border-radius: 12px;
+  border: 2px solid rgba(76, 175, 80, 0.3);
+}
+
+.matched-section h3 {
+  margin: 0 0 15px 0;
+  color: #4caf50;
+  font-size: 1.2rem;
+  text-align: center;
+}
+
+.matched-pairs-display {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 20px;
+}
+
+.matched-column {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.matched-item {
+  padding: 12px 16px;
+  background: white;
+  border-radius: 8px;
+  border: 2px solid #4caf50;
+  color: #4caf50;
+  font-weight: 500;
+  text-align: center;
+  pointer-events: none;
+}
+
+.matching-section {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 40px;
+  min-height: 400px;
+}
+
+.match-column {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.match-item {
+  padding: 16px 20px;
+  background: white;
+  border: 2px solid #e0e0e0;
+  border-radius: 10px;
+  font-size: 1.1rem;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  text-align: center;
+  min-height: 60px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #333;
+}
+
+.match-item:hover:not(:disabled) {
+  border-color: #2196f3;
+  background: rgba(33, 150, 243, 0.05);
+  transform: translateY(-2px);
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+}
+
+.match-item.selected {
+  border-color: #2196f3;
+  background: rgba(33, 150, 243, 0.15);
+  font-weight: 600;
+  box-shadow: 0 0 0 3px rgba(33, 150, 243, 0.2);
+}
+
+.match-item.matched {
+  border-color: #4caf50;
+  background: rgba(76, 175, 80, 0.1);
+  color: #4caf50;
+  pointer-events: none;
+}
+
+.match-item.error {
+  border-color: #f44336;
+  background: rgba(244, 67, 54, 0.1);
+  color: #f44336;
+  animation: shake 0.5s ease-in-out;
+}
+
+.match-item:disabled {
+  cursor: not-allowed;
+  opacity: 0.6;
+}
+
+/* Shake animation for errors */
+@keyframes shake {
+  0%, 100% {
+    transform: translateX(0);
+  }
+  10%, 30%, 50%, 70%, 90% {
+    transform: translateX(-8px);
+  }
+  20%, 40%, 60%, 80% {
+    transform: translateX(8px);
+  }
+}
+
+/* Responsive design */
+@media (max-width: 768px) {
+  .match-pairs-container {
+    padding: 15px;
+  }
+
+  .matching-section,
+  .matched-pairs-display {
+    grid-template-columns: 1fr;
+    gap: 20px;
+  }
+
+  .match-item,
+  .matched-item {
+    font-size: 1rem;
+    padding: 12px 16px;
+    min-height: 50px;
+  }
+
+  .matched-section h3 {
+    font-size: 1rem;
+  }
+}
+

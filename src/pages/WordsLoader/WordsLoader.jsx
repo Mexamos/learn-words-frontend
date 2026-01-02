@@ -10,7 +10,6 @@ import Layout from '../../components/Layout/Layout'
 import YouTubeImportForm from './components/YouTubeImportForm'
 import VideoOcrImportForm from './components/VideoOcrImportForm'
 import ImageOcrImportForm from './components/ImageOcrImportForm'
-import ImageUrlImportForm from './components/ImageUrlImportForm'
 import { IMPORT_SOURCES } from './constants'
 import { 
   handleYoutubeImport, 

@@ -16,7 +16,6 @@ export const OCR_AVAILABLE_LANGUAGES = [
 export const IMPORT_SOURCES = [
   { label: "🎥 Text on video file", value: "text-on-video-file" },
   { label: "🖼️ Upload images with text", value: "images-ocr" },
-  { label: "▶️ YouTube video", value: "youtube" },
 ];
 
 

@@ -1,15 +1,21 @@
 import './LearnWords.css'
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useMemo, useCallback } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { Spinner, Select, Portal, createListCollection } from '@chakra-ui/react'
 import { toast } from 'sonner'
 import Layout from '../../components/Layout/Layout'
 import FlipCard from '../../components/FlipCard/FlipCard'
+import SelectCorrectAnswer from '../../components/SelectCorrectAnswer/SelectCorrectAnswer'
+import MatchPairs from '../../components/MatchPairs/MatchPairs'
+import MakeWord from '../../components/MakeWord/MakeWord'
 import Congratulations from '../../components/Congratulations/Congratulations'
+import LearningHeader from './components/LearningHeader'
+import NavigationButtons from './components/NavigationButtons'
 import { getVocabularies, getAllWords } from '../../services/wordsService'
 import { getLearningModes, createLearningLog } from '../../services/learningService'
 import { LANGUAGE_NAMES } from '../../constants/languages'
-import { LEARNING_MODES } from './constants'
+import { LEARNING_MODES, WORD_FETCH_MULTIPLIER } from './constants'
+import { shuffleArray } from '../../utils/helpers'
 
 export default function LearnWords() {
   const navigate = useNavigate()
@@ -24,6 +30,8 @@ export default function LearnWords() {
   const [showCongratulations, setShowCongratulations] = useState(false)
   const [words, setWords] = useState([])
   const [currentIndex, setCurrentIndex] = useState(0)
+  const [wordResults, setWordResults] = useState({})
+  const [wordOptions, setWordOptions] = useState({})
 
   useEffect(() => {
     fetchVocabularies()
@@ -51,7 +59,6 @@ export default function LearnWords() {
       const modes = await getLearningModes()
       setLearningModes(modes)
       if (modes.length > 0) {
-        // Set default mode
         const defaultMode = modes.find(m => m.code === LEARNING_MODES.WORD_TO_TRANSLATION.value) || modes[0]
         setSelectedMode(defaultMode.code)
         setSelectedModeId(defaultMode.id)
@@ -59,22 +66,7 @@ export default function LearnWords() {
     } catch (error) {
       console.error('Failed to fetch learning modes:', error)
       toast.error('Failed to load learning modes')
-      // Fallback to hardcoded modes
-      setLearningModes([
-        { id: 1, code: LEARNING_MODES.WORD_TO_TRANSLATION.value, name: LEARNING_MODES.WORD_TO_TRANSLATION.label },
-        { id: 2, code: LEARNING_MODES.TRANSLATION_TO_WORD.value, name: LEARNING_MODES.TRANSLATION_TO_WORD.label }
-      ])
-      setSelectedModeId(1)
     }
-  }
-
-  const shuffleArray = (array) => {
-    const shuffled = [...array]
-    for (let i = shuffled.length - 1; i > 0; i--) {
-      const j = Math.floor(Math.random() * (i + 1));
-      [shuffled[i], shuffled[j]] = [shuffled[j], shuffled[i]]
-    }
-    return shuffled
   }
 
   const handleStartLearning = async () => {
@@ -87,9 +79,9 @@ export default function LearnWords() {
       setIsLoading(true)
       const selectedCount = Math.max(1, parseInt(wordCount) || 10)
       
-      // Request more words than needed for better randomization (2x)
+      // Request more words than needed for better randomization
       // This ensures we have variety even after shuffling
-      const requestLimit = selectedCount * 2
+      const requestLimit = selectedCount * WORD_FETCH_MULTIPLIER
       let fetchedWords = await getAllWords(parseInt(selectedVocabulary[0]), requestLimit, true)
       if (fetchedWords.length === 0) {
         fetchedWords = await getAllWords(parseInt(selectedVocabulary[0]), requestLimit, false)
@@ -109,6 +101,8 @@ export default function LearnWords() {
       
       setWords(limitedWords)
       setCurrentIndex(0)
+      setWordResults({})
+      setWordOptions({}) // Reset options when starting new session
       setIsLearning(true)
     } catch (error) {
       console.error('Failed to fetch words:', error)
@@ -118,30 +112,40 @@ export default function LearnWords() {
     }
   }
 
-  const handleExit = () => {
+  const handleExit = useCallback(() => {
     setIsLearning(false)
     setShowCongratulations(false)
     setWords([])
     setCurrentIndex(0)
-  }
+    setWordResults({})
+    setWordOptions({})
+  }, [])
 
-  const handlePrevious = () => {
+  const handlePrevious = useCallback(() => {
     if (currentIndex > 0) {
       setCurrentIndex((prev) => prev - 1)
     }
-  }
+  }, [currentIndex])
 
-  const handleNext = async () => {
+  const handleNext = useCallback(async () => {
     if (currentIndex < words.length - 1) {
       setCurrentIndex((prev) => prev + 1)
     } else {
       // Last word - create learning log then show congratulations
       try {
-        const wordIds = words.map(w => w.id)
+        // Prepare words list with results
+        const wordsData = words.map(word => {
+          const result = wordResults[word.id]
+          return {
+            word_id: word.id,
+            is_correct: result && result.isAnswered ? result.isCorrect : false
+          }
+        })
+        
         await createLearningLog(
           parseInt(selectedVocabulary[0]), 
           selectedModeId,
-          wordIds
+          wordsData
         )
         setShowCongratulations(true)
       } catch (error) {
@@ -151,7 +155,117 @@ export default function LearnWords() {
         setShowCongratulations(true)
       }
     }
-  }
+  }, [currentIndex, words, wordResults, selectedVocabulary, selectedModeId])
+
+  // Generate options for select correct answer (4 options including correct answer)
+  const generateSelectCorrectAnswerOptions = useCallback((currentWord, allWords) => {
+    const correctAnswer = currentWord.translation
+    const allTranslations = allWords.map(w => w.translation)
+
+    const uniqueTranslations = [...new Set(allTranslations)]
+    const wrongAnswers = uniqueTranslations.filter(t => t !== correctAnswer)
+    const selectedWrong = wrongAnswers.length <= 3 
+      ? wrongAnswers 
+      : shuffleArray(wrongAnswers).slice(0, 3)
+    
+    const options = shuffleArray([...selectedWrong, correctAnswer])
+    return options
+  }, [])
+
+  // Generate options for each word when words change (only for select-correct-answer mode)
+  useEffect(() => {
+    const isSelectCorrectAnswerMode = selectedMode === LEARNING_MODES.SELECT_CORRECT_ANSWER.value
+    if (isSelectCorrectAnswerMode && words.length > 0) {
+      setWordOptions(prev => {
+        const newOptions = {}
+        words.forEach(word => {
+          if (!prev[word.id]) {
+            newOptions[word.id] = generateSelectCorrectAnswerOptions(word, words)
+          }
+        })
+        if (Object.keys(newOptions).length > 0) {
+          return { ...prev, ...newOptions }
+        }
+        return prev
+      })
+    }
+  }, [words, selectedMode, generateSelectCorrectAnswerOptions])
+
+  // Current word and mode calculations
+  const currentWord = words[currentIndex]
+  const isSelectCorrectAnswer = selectedMode === LEARNING_MODES.SELECT_CORRECT_ANSWER.value
+  const isMatchPairs = selectedMode === LEARNING_MODES.MATCH_PAIRS.value
+  const isMakeWord = selectedMode === LEARNING_MODES.MAKE_WORD.value
+  const currentWordResult = currentWord ? wordResults[currentWord.id] : null
+
+  // Keyboard navigation
+  useEffect(() => {
+    if (!isLearning) return
+
+    const handleKeyPress = (e) => {
+      // Ignore if user is typing in an input field
+      if (e.target.tagName === 'INPUT' || e.target.tagName === 'TEXTAREA') return
+
+      if (e.key === 'ArrowLeft' && currentIndex > 0) {
+        e.preventDefault()
+        handlePrevious()
+      } else if (e.key === 'ArrowRight') {
+        e.preventDefault()
+        // Only allow next if not in select-correct-answer or make-word mode, or answer is selected
+        const canGoNext = (!isSelectCorrectAnswer && !isMakeWord) || (currentWordResult && currentWordResult.isAnswered)
+        if (canGoNext) {
+          handleNext()
+        }
+      } else if (e.key === 'Escape') {
+        e.preventDefault()
+        handleExit()
+      }
+    }
+
+    window.addEventListener('keydown', handleKeyPress)
+    return () => window.removeEventListener('keydown', handleKeyPress)
+  }, [isLearning, currentIndex, isSelectCorrectAnswer, isMakeWord, currentWordResult, handleNext, handlePrevious, handleExit])
+
+  const handleAnswerSelected = useCallback((wordId, selectedAnswer, isCorrect) => {
+    setWordResults(prev => ({
+      ...prev,
+      [wordId]: {
+        selectedAnswer,
+        isCorrect,
+        isAnswered: true
+      }
+    }))
+  }, [])
+
+  const handleMatchPairsComplete = useCallback(async (matchedPairs) => {
+    try {
+      const wordsData = matchedPairs.map(pair => ({
+        word_id: pair.id,
+        is_correct: !pair.hasError
+      }))
+      
+      await createLearningLog(
+        parseInt(selectedVocabulary[0]), 
+        selectedModeId,
+        wordsData
+      )
+      setShowCongratulations(true)
+    } catch (error) {
+      console.error('Failed to create learning log:', error)
+      toast.error('Failed to save learning progress, but great job learning!')
+      setShowCongratulations(true)
+    }
+  }, [selectedVocabulary, selectedModeId])
+
+  const handleMakeWordComplete = useCallback((wordId, isCorrect) => {
+    setWordResults(prev => ({
+      ...prev,
+      [wordId]: {
+        isCorrect,
+        isAnswered: true
+      }
+    }))
+  }, [])
 
   const handleCongratulationsClose = () => {
     handleExit()
@@ -168,9 +282,14 @@ export default function LearnWords() {
     }))
   })
 
-  const currentWord = words[currentIndex]
   const frontText = selectedMode === LEARNING_MODES.WORD_TO_TRANSLATION.value ? currentWord?.word : currentWord?.translation
   const backText = selectedMode === LEARNING_MODES.WORD_TO_TRANSLATION.value ? currentWord?.translation : currentWord?.word
+  
+  // For select correct answer mode
+  const selectCorrectAnswerOptions = useMemo(() => {
+    if (!isSelectCorrectAnswer || !currentWord) return []
+    return wordOptions[currentWord.id] || []
+  }, [isSelectCorrectAnswer, currentWord, wordOptions])
 
   if (isLoading) {
     return (
@@ -200,70 +319,60 @@ export default function LearnWords() {
     return (
       <Layout pageTitle="Learn Words">
         <div className="learn-words-container">
-          <div className="learning-header">
-            <button className="back-button" onClick={handleExit}>
-              <svg
-                xmlns="http://www.w3.org/2000/svg"
-                width="20"
-                height="20"
-                viewBox="0 0 24 24"
-                fill="none"
-                stroke="currentColor"
-                strokeWidth="2"
-                strokeLinecap="round"
-                strokeLinejoin="round"
-              >
-                <polyline points="15 18 9 12 15 6" />
-              </svg>
-              <span>Back to Selection</span>
-            </button>
-            <div className="word-counter">
-              {currentIndex + 1} / {words.length}
-            </div>
-          </div>
+          <LearningHeader 
+            onExit={handleExit}
+            currentIndex={currentIndex}
+            totalWords={words.length}
+            hideCounter={isMatchPairs}
+          />
 
           <div className="learning-content">
-            {!isFirstWord && (
-              <button className="nav-button nav-button-left" onClick={handlePrevious}>
-                <svg
-                  xmlns="http://www.w3.org/2000/svg"
-                  width="32"
-                  height="32"
-                  viewBox="0 0 24 24"
-                  fill="none"
-                  stroke="currentColor"
-                  strokeWidth="2"
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                >
-                  <polyline points="15 18 9 12 15 6" />
-                </svg>
-              </button>
-            )}
-
-            <div className="card-wrapper">
-              <FlipCard 
-                key={currentIndex}
-                frontText={frontText} 
-                backText={backText}
+            {isMatchPairs ? (
+              <MatchPairs
+                words={words}
+                onComplete={handleMatchPairsComplete}
               />
-            </div>
+            ) : (
+              <>
+                <NavigationButtons
+                  isFirstWord={isFirstWord || isMakeWord}
+                  onPrevious={handlePrevious}
+                  onNext={handleNext}
+                  isNextDisabled={(isSelectCorrectAnswer || isMakeWord) && (!currentWordResult || !currentWordResult.isAnswered)}
+                />
 
-            <button className="nav-button nav-button-right" onClick={handleNext}>
-              <svg
-                xmlns="http://www.w3.org/2000/svg"
-                width="32"
-                height="32"
-                viewBox="0 0 24 24"
-                fill="none"
-                stroke="currentColor"
-                strokeWidth="2"
-                strokeLinecap="round"
-                strokeLinejoin="round"
-              >
-                <polyline points="9 18 15 12 9 6" />
-              </svg>
-            </button>
+                <div className="card-wrapper">
+                  {isSelectCorrectAnswer ? (
+                    <SelectCorrectAnswer
+                      key={currentIndex}
+                      word={currentWord?.word}
+                      options={selectCorrectAnswerOptions}
+                      correctAnswer={currentWord?.translation}
+                      onAnswerSelected={(option, isCorrect) => 
+                        handleAnswerSelected(currentWord.id, option, isCorrect)
+                      }
+                      selectedAnswer={currentWordResult?.selectedAnswer}
+                      isAnswered={currentWordResult?.isAnswered || false}
+                    />
+                  ) : isMakeWord ? (
+                    <MakeWord
+                      key={currentIndex}
+                      word={currentWord?.word}
+                      translation={currentWord?.translation}
+                      onAnswerComplete={(isCorrect) => 
+                        handleMakeWordComplete(currentWord.id, isCorrect)
+                      }
+                    />
+                  ) : (
+                    <FlipCard 
+                      key={currentIndex}
+                      frontText={frontText} 
+                      backText={backText}
+                    />
+                  )}
+                </div>
+              </>
+            )}
           </div>
         </div>
       </Layout>
