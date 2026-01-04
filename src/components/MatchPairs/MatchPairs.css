@@ -45,7 +45,6 @@
   display: grid;
   grid-template-columns: 1fr 1fr;
   gap: 40px;
-  min-height: 400px;
 }
 
 .match-column {
@@ -80,8 +79,12 @@
 .match-item.selected {
   border-color: #2196f3;
   background: rgba(33, 150, 243, 0.15);
-  font-weight: 600;
   box-shadow: 0 0 0 3px rgba(33, 150, 243, 0.2);
+  text-shadow: 
+    0.5px 0 0 currentColor,
+    -0.5px 0 0 currentColor,
+    0 0.5px 0 currentColor,
+    0 -0.5px 0 currentColor;
 }
 
 .match-item.matched {

@@ -11,13 +11,13 @@ export const getLearningModes = async () => {
 /**
  * Create a learning log after completing a learning session
  * @param {number} vocabularyId - The vocabulary ID
- * @param {number} learningModeId - The learning mode ID
+ * @param {Array<number>} learningModeIds - Array of learning mode IDs
  * @param {Array<{word_id: number, is_correct: boolean}>} words - Array of word objects with results
  */
-export const createLearningLog = async (vocabularyId, learningModeId, words) => {
+export const createLearningLog = async (vocabularyId, learningModeIds, words) => {
   const response = await api.post('/api/v1/learning-logs', {
     vocabulary_id: vocabularyId,
-    learning_mode_id: learningModeId,
+    learning_mode_ids: learningModeIds,
     words: words
   })
   return response.data

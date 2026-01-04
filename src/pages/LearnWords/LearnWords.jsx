@@ -21,8 +21,9 @@ export default function LearnWords() {
   const navigate = useNavigate()
   const [vocabularies, setVocabularies] = useState([])
   const [learningModes, setLearningModes] = useState([])
-  const [selectedMode, setSelectedMode] = useState(LEARNING_MODES.WORD_TO_TRANSLATION.value)
-  const [selectedModeId, setSelectedModeId] = useState(null)
+  const [selectedModes, setSelectedModes] = useState([])
+  const [selectedModeIds, setSelectedModeIds] = useState([])
+  const [currentModeIndex, setCurrentModeIndex] = useState(0)
   const [selectedVocabulary, setSelectedVocabulary] = useState([])
   const [wordCount, setWordCount] = useState(10)
   const [isLoading, setIsLoading] = useState(true)
@@ -30,8 +31,10 @@ export default function LearnWords() {
   const [showCongratulations, setShowCongratulations] = useState(false)
   const [words, setWords] = useState([])
   const [currentIndex, setCurrentIndex] = useState(0)
-  const [wordResults, setWordResults] = useState({})
+  const [modeResults, setModeResults] = useState({})
   const [wordOptions, setWordOptions] = useState({})
+  const [isTransitioning, setIsTransitioning] = useState(false)
+  const [allModesCompleted, setAllModesCompleted] = useState(false)
 
   useEffect(() => {
     fetchVocabularies()
@@ -58,11 +61,6 @@ export default function LearnWords() {
     try {
       const modes = await getLearningModes()
       setLearningModes(modes)
-      if (modes.length > 0) {
-        const defaultMode = modes.find(m => m.code === LEARNING_MODES.WORD_TO_TRANSLATION.value) || modes[0]
-        setSelectedMode(defaultMode.code)
-        setSelectedModeId(defaultMode.id)
-      }
     } catch (error) {
       console.error('Failed to fetch learning modes:', error)
       toast.error('Failed to load learning modes')
@@ -101,7 +99,7 @@ export default function LearnWords() {
       
       setWords(limitedWords)
       setCurrentIndex(0)
-      setWordResults({})
+      setModeResults({})
       setWordOptions({}) // Reset options when starting new session
       setIsLearning(true)
     } catch (error) {
@@ -112,13 +110,67 @@ export default function LearnWords() {
     }
   }
 
+  const handleModeToggle = useCallback((mode, checked) => {
+    if (checked) {
+      setSelectedModes(prev => [...prev, mode.code])
+      setSelectedModeIds(prev => [...prev, mode.id])
+    } else {
+      setSelectedModes(prev => prev.filter(m => m !== mode.code))
+      setSelectedModeIds(prev => prev.filter(id => id !== mode.id))
+    }
+  }, [])
+
+  const createFinalLearningLog = useCallback(async () => {
+    try {
+      const aggregatedResults = words.map(word => {
+        let isCorrectInAllModes = true
+        for (const modeCode of selectedModes) {
+          const modeResult = modeResults[modeCode]
+          const wordResult = modeResult?.[word.id]
+          
+          if (!wordResult || !wordResult.isCorrect) {
+            isCorrectInAllModes = false
+            break
+          }
+        }
+
+        return {
+          word_id: word.id,
+          is_correct: isCorrectInAllModes
+        }
+      })
+
+      await createLearningLog(
+        parseInt(selectedVocabulary[0]),
+        selectedModeIds,
+        aggregatedResults
+      )
+      setShowCongratulations(true)
+      setAllModesCompleted(false)
+    } catch (error) {
+      console.error('Failed to create learning logs:', error)
+      toast.error('Failed to save learning progress')
+      setShowCongratulations(true)
+      setAllModesCompleted(false)
+    }
+  }, [words, selectedModes, selectedModeIds, modeResults, selectedVocabulary])
+  
+  useEffect(() => {
+    if (allModesCompleted && Object.keys(modeResults).length === selectedModes.length) {
+      createFinalLearningLog()
+    }
+  }, [allModesCompleted, modeResults, selectedModes.length, createFinalLearningLog])
+
   const handleExit = useCallback(() => {
     setIsLearning(false)
     setShowCongratulations(false)
     setWords([])
     setCurrentIndex(0)
-    setWordResults({})
+    setCurrentModeIndex(0)
+    setModeResults({})
     setWordOptions({})
+    setIsTransitioning(false)
+    setAllModesCompleted(false)
   }, [])
 
   const handlePrevious = useCallback(() => {
@@ -127,35 +179,59 @@ export default function LearnWords() {
     }
   }, [currentIndex])
 
+  const currentModeCode = selectedModes[currentModeIndex] || ''
+
   const handleNext = useCallback(async () => {
+    if (isTransitioning) {
+      return
+    }
+
+    // For FlipCard modes (word-to-translation, translation-to-word), mark current word as viewed
+    const isFlipCardMode = currentModeCode === LEARNING_MODES.WORD_TO_TRANSLATION.value || 
+                           currentModeCode === LEARNING_MODES.TRANSLATION_TO_WORD.value
+
+    const word = words[currentIndex]
+    if (isFlipCardMode && word) {
+      const currentModeResults = modeResults[currentModeCode] || {}
+      if (!currentModeResults[word.id]) {
+        setModeResults(prev => ({
+          ...prev,
+          [currentModeCode]: {
+            ...(prev[currentModeCode] || {}),
+            [word.id]: {
+              isCorrect: true,
+              isAnswered: true
+            }
+          }
+        }))
+      }
+    }
+
     if (currentIndex < words.length - 1) {
       setCurrentIndex((prev) => prev + 1)
     } else {
-      // Last word - create learning log then show congratulations
-      try {
-        // Prepare words list with results
-        const wordsData = words.map(word => {
-          const result = wordResults[word.id]
-          return {
-            word_id: word.id,
-            is_correct: result && result.isAnswered ? result.isCorrect : false
-          }
+      setIsTransitioning(true)
+      
+      // Check if there are more modes to complete
+      if (currentModeIndex < selectedModes.length - 1) {
+        // More modes to go - show toast and transition
+        const nextMode = learningModes.find(m => m.code === selectedModes[currentModeIndex + 1])
+        toast.info(`Moving to mode ${currentModeIndex + 2}/${selectedModes.length}: ${nextMode?.name}`, {
+          duration: 2000
         })
         
-        await createLearningLog(
-          parseInt(selectedVocabulary[0]), 
-          selectedModeId,
-          wordsData
-        )
-        setShowCongratulations(true)
-      } catch (error) {
-        console.error('Failed to create learning log:', error)
-        // Still show congratulations even if logging fails
-        toast.error('Failed to save learning progress, but great job learning!')
-        setShowCongratulations(true)
+        setTimeout(() => {
+          setCurrentModeIndex(prev => prev + 1)
+          setCurrentIndex(0)
+          setWordOptions({})
+          setIsTransitioning(false)
+        }, 2000)
+      } else {
+        setAllModesCompleted(true)
+        setIsTransitioning(false)
       }
     }
-  }, [currentIndex, words, wordResults, selectedVocabulary, selectedModeId])
+  }, [isTransitioning, currentIndex, words, modeResults, currentModeCode, currentModeIndex, selectedModes, learningModes])
 
   // Generate options for select correct answer (4 options including correct answer)
   const generateSelectCorrectAnswerOptions = useCallback((currentWord, allWords) => {
@@ -174,7 +250,7 @@ export default function LearnWords() {
 
   // Generate options for each word when words change (only for select-correct-answer mode)
   useEffect(() => {
-    const isSelectCorrectAnswerMode = selectedMode === LEARNING_MODES.SELECT_CORRECT_ANSWER.value
+    const isSelectCorrectAnswerMode = currentModeCode === LEARNING_MODES.SELECT_CORRECT_ANSWER.value
     if (isSelectCorrectAnswerMode && words.length > 0) {
       setWordOptions(prev => {
         const newOptions = {}
@@ -189,14 +265,14 @@ export default function LearnWords() {
         return prev
       })
     }
-  }, [words, selectedMode, generateSelectCorrectAnswerOptions])
+  }, [words, currentModeCode, generateSelectCorrectAnswerOptions])
 
   // Current word and mode calculations
   const currentWord = words[currentIndex]
-  const isSelectCorrectAnswer = selectedMode === LEARNING_MODES.SELECT_CORRECT_ANSWER.value
-  const isMatchPairs = selectedMode === LEARNING_MODES.MATCH_PAIRS.value
-  const isMakeWord = selectedMode === LEARNING_MODES.MAKE_WORD.value
-  const currentWordResult = currentWord ? wordResults[currentWord.id] : null
+  const isSelectCorrectAnswer = currentModeCode === LEARNING_MODES.SELECT_CORRECT_ANSWER.value
+  const isMatchPairs = currentModeCode === LEARNING_MODES.MATCH_PAIRS.value
+  const isMakeWord = currentModeCode === LEARNING_MODES.MAKE_WORD.value
+  const currentWordResult = currentWord && modeResults[currentModeCode] ? modeResults[currentModeCode][currentWord.id] : null
 
   // Keyboard navigation
   useEffect(() => {
@@ -227,45 +303,72 @@ export default function LearnWords() {
   }, [isLearning, currentIndex, isSelectCorrectAnswer, isMakeWord, currentWordResult, handleNext, handlePrevious, handleExit])
 
   const handleAnswerSelected = useCallback((wordId, selectedAnswer, isCorrect) => {
-    setWordResults(prev => ({
+    setModeResults(prev => ({
       ...prev,
-      [wordId]: {
-        selectedAnswer,
-        isCorrect,
-        isAnswered: true
+      [currentModeCode]: {
+        ...(prev[currentModeCode] || {}),
+        [wordId]: {
+          selectedAnswer,
+          isCorrect,
+          isAnswered: true
+        }
       }
     }))
-  }, [])
+  }, [currentModeCode])
 
   const handleMatchPairsComplete = useCallback(async (matchedPairs) => {
-    try {
-      const wordsData = matchedPairs.map(pair => ({
-        word_id: pair.id,
-        is_correct: !pair.hasError
-      }))
-      
-      await createLearningLog(
-        parseInt(selectedVocabulary[0]), 
-        selectedModeId,
-        wordsData
-      )
-      setShowCongratulations(true)
-    } catch (error) {
-      console.error('Failed to create learning log:', error)
-      toast.error('Failed to save learning progress, but great job learning!')
-      setShowCongratulations(true)
+    if (isTransitioning) {
+      return
     }
-  }, [selectedVocabulary, selectedModeId])
-
-  const handleMakeWordComplete = useCallback((wordId, isCorrect) => {
-    setWordResults(prev => ({
-      ...prev,
-      [wordId]: {
-        isCorrect,
+    
+    setIsTransitioning(true)
+    
+    // Convert matched pairs to word results format
+    const results = {}
+    matchedPairs.forEach(pair => {
+      results[pair.id] = {
+        isCorrect: !pair.hasError,
         isAnswered: true
       }
+    })
+    
+    setModeResults(prev => ({
+      ...prev,
+      [currentModeCode]: results
     }))
-  }, [])
+    
+    // Check if there are more modes to complete
+    if (currentModeIndex < selectedModes.length - 1) {
+      // More modes to go - show toast and transition
+      const nextMode = learningModes.find(m => m.code === selectedModes[currentModeIndex + 1])
+      toast.info(`Moving to mode ${currentModeIndex + 2}/${selectedModes.length}: ${nextMode?.name}`, {
+        duration: 2000
+      })
+      
+      setTimeout(() => {
+        setCurrentModeIndex(prev => prev + 1)
+        setCurrentIndex(0)
+        setWordOptions({})
+        setIsTransitioning(false)
+      }, 2000)
+    } else {
+      setAllModesCompleted(true)
+      setIsTransitioning(false)
+    }
+  }, [isTransitioning, currentModeCode, currentModeIndex, selectedModes, learningModes])
+
+  const handleMakeWordComplete = useCallback((wordId, isCorrect) => {
+    setModeResults(prev => ({
+      ...prev,
+      [currentModeCode]: {
+        ...(prev[currentModeCode] || {}),
+        [wordId]: {
+          isCorrect,
+          isAnswered: true
+        }
+      }
+    }))
+  }, [currentModeCode])
 
   const handleCongratulationsClose = () => {
     handleExit()
@@ -282,8 +385,8 @@ export default function LearnWords() {
     }))
   })
 
-  const frontText = selectedMode === LEARNING_MODES.WORD_TO_TRANSLATION.value ? currentWord?.word : currentWord?.translation
-  const backText = selectedMode === LEARNING_MODES.WORD_TO_TRANSLATION.value ? currentWord?.translation : currentWord?.word
+  const frontText = currentModeCode === LEARNING_MODES.WORD_TO_TRANSLATION.value ? currentWord?.word : currentWord?.translation
+  const backText = currentModeCode === LEARNING_MODES.WORD_TO_TRANSLATION.value ? currentWord?.translation : currentWord?.word
   
   // For select correct answer mode
   const selectCorrectAnswerOptions = useMemo(() => {
@@ -324,6 +427,9 @@ export default function LearnWords() {
             currentIndex={currentIndex}
             totalWords={words.length}
             hideCounter={isMatchPairs}
+            currentMode={learningModes.find(m => m.code === currentModeCode)?.name || ''}
+            currentModeIndex={currentModeIndex}
+            totalModes={selectedModes.length}
           />
 
           <div className="learning-content">
@@ -341,7 +447,7 @@ export default function LearnWords() {
                   isNextDisabled={(isSelectCorrectAnswer || isMakeWord) && (!currentWordResult || !currentWordResult.isAnswered)}
                 />
 
-                <div className="card-wrapper">
+            <div className="card-wrapper">
                   {isSelectCorrectAnswer ? (
                     <SelectCorrectAnswer
                       key={currentIndex}
@@ -364,13 +470,13 @@ export default function LearnWords() {
                       }
                     />
                   ) : (
-                    <FlipCard 
-                      key={currentIndex}
-                      frontText={frontText} 
-                      backText={backText}
-                    />
+              <FlipCard 
+                key={currentIndex}
+                frontText={frontText} 
+                backText={backText}
+              />
                   )}
-                </div>
+            </div>
               </>
             )}
           </div>
@@ -392,18 +498,14 @@ export default function LearnWords() {
           ) : (
             <div className="selection-form">
               <div className="form-group">
-                <label className="form-label">Select Learning Mode</label>
-                <div className="radio-group">
+                <label className="form-label">Select Learning Modes (you can select multiple)</label>
+                <div className="mode-selection-checkboxes">
                   {learningModes.map((mode) => (
-                    <label key={mode.id} className="radio-option">
+                    <label key={mode.id}>
                       <input
-                        type="radio"
-                        value={mode.code}
-                        checked={selectedMode === mode.code}
-                        onChange={(e) => {
-                          setSelectedMode(e.target.value)
-                          setSelectedModeId(mode.id)
-                        }}
+                        type="checkbox"
+                        checked={selectedModes.includes(mode.code)}
+                        onChange={(e) => handleModeToggle(mode, e.target.checked)}
                       />
                       <span>{mode.name}</span>
                     </label>
@@ -463,7 +565,11 @@ export default function LearnWords() {
                 />
               </div>
 
-              <button className="start-button" onClick={handleStartLearning}>
+              <button 
+                className="start-button" 
+                onClick={handleStartLearning}
+                disabled={selectedVocabulary.length === 0 || selectedModes.length === 0}
+              >
                 Start Learning
               </button>
             </div>
