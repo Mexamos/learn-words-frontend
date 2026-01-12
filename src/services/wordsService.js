@@ -264,16 +264,20 @@ export const getVocabularyWithStats = async (vocabularyId) => {
 };
 
 /**
- * Get paginated words from a vocabulary with optional search.
+ * Get paginated words from a vocabulary with optional search and sorting.
  * @param {number} vocabularyId
- * @param {{ search?: string, page?: number, limit?: number }} params
+ * @param {{ search?: string, page?: number, limit?: number, sortBy?: string, sortOrder?: string }} params
  * @returns {Promise<{ words: Array, total: number, page: number, limit: number }>}
  */
-export const getWordsPaginated = async (vocabularyId, { search = '', page = 1, limit = 20 } = {}) => {
+export const getWordsPaginated = async (vocabularyId, { search = '', page = 1, limit = 20, sortBy = null, sortOrder = 'asc' } = {}) => {
   const params = new URLSearchParams();
   if (search) params.append('search', search);
   params.append('page', page.toString());
   params.append('limit', limit.toString());
+  if (sortBy) {
+    params.append('sort_by', sortBy);
+    params.append('sort_order', sortOrder);
+  }
 
   const response = await api.get(`/api/v1/vocabularies/${vocabularyId}/words/paginated?${params.toString()}`);
   return response.data;
@@ -312,11 +316,8 @@ export const updateWordsBatch = async (vocabularyId, updates) => {
  * @param {boolean} excludeLearnedToday - If true, exclude words learned today
  * @returns {Promise<Array<{ id: number, word: string, translation: string, status: string, context?: string, examples?: string[] }>>}
  */
-export const getAllWords = async (vocabularyId, limit = 10000, excludeLearnedToday = false) => {
+export const getAllWords = async (vocabularyId, limit = 10000) => {
   const params = new URLSearchParams({ limit: limit.toString() });
-  if (excludeLearnedToday) {
-    params.append('exclude_learned_today', 'true');
-  }
   const response = await api.get(`/api/v1/vocabularies/${vocabularyId}/words?${params.toString()}`);
   return response.data;
 };

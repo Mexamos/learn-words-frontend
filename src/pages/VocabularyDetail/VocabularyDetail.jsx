@@ -1,5 +1,5 @@
 import './VocabularyDetail.css'
-import { useState, useEffect, useCallback } from 'react'
+import { useState, useEffect } from 'react'
 import { useParams, useNavigate } from 'react-router-dom'
 import { Button, Spinner } from '@chakra-ui/react'
 import { toast } from 'sonner'
@@ -7,6 +7,7 @@ import Layout from '../../components/Layout/Layout'
 import DeleteConfirmationModal from '../../components/DeleteConfirmationModal/DeleteConfirmationModal'
 import EditWordsModal from '../../components/EditWordsModal/EditWordsModal'
 import AddWordsModal from '../../components/AddWordsModal/AddWordsModal'
+import SortableColumnHeader from '../../components/SortableColumnHeader/SortableColumnHeader'
 import {
   getVocabularyWithStats,
   getWordsPaginated,
@@ -34,6 +35,8 @@ export default function VocabularyDetail() {
   const [isAddModalOpen, setIsAddModalOpen] = useState(false)
   const [singleWordToEdit, setSingleWordToEdit] = useState(null)
   const [singleWordToDelete, setSingleWordToDelete] = useState(null)
+  const [sortBy, setSortBy] = useState(null)
+  const [sortOrder, setSortOrder] = useState('asc')
 
   // Debounce search input
   useEffect(() => {
@@ -50,12 +53,12 @@ export default function VocabularyDetail() {
     fetchVocabulary()
   }, [id])
 
-  // Fetch words when page, search, or vocabulary changes
+  // Fetch words when page, search, sort, or vocabulary changes
   useEffect(() => {
     if (vocabulary) {
       fetchWords()
     }
-  }, [vocabulary, page, debouncedSearch])
+  }, [vocabulary, page, debouncedSearch, sortBy, sortOrder])
 
   const fetchVocabulary = async () => {
     try {
@@ -74,7 +77,9 @@ export default function VocabularyDetail() {
       const data = await getWordsPaginated(id, {
         search: debouncedSearch,
         page,
-        limit
+        limit,
+        sortBy,
+        sortOrder
       })
       setWords(data.words)
       setTotal(data.total)
@@ -107,11 +112,27 @@ export default function VocabularyDetail() {
     })
   }
 
+  const handleSort = (column) => {
+    if (sortBy === column) {
+      // Tri-state: asc -> desc -> null
+      if (sortOrder === 'asc') {
+        setSortOrder('desc')
+      } else {
+        setSortBy(null)
+        setSortOrder('asc')
+      }
+    } else {
+      setSortBy(column)
+      setSortOrder('asc')
+      setPage(1) // Reset to first page on new sort
+    }
+  }
+
   const handleDeleteWords = async () => {
     try {
       await deleteWordsBatch(id, Array.from(selectedWordIds))
       toast.success(`${selectedWordIds.size} word(s) deleted successfully`)
-      fetchWords() // Refresh the list
+      fetchWords()
     } catch (error) {
       console.error('Failed to delete words:', error)
       toast.error('Failed to delete words')
@@ -123,7 +144,7 @@ export default function VocabularyDetail() {
     try {
       await updateWordsBatch(id, updates)
       toast.success(`${updates.length} word(s) updated successfully`)
-      fetchWords() // Refresh the list
+      fetchWords()
     } catch (error) {
       console.error('Failed to update words:', error)
       toast.error('Failed to update words')
@@ -135,7 +156,7 @@ export default function VocabularyDetail() {
     try {
       const createdWords = await addWordsWithTranslations(id, wordsWithTranslations)
       toast.success(`${createdWords.length} word(s) added successfully`)
-      fetchWords() // Refresh the list
+      fetchWords()
       setIsAddModalOpen(false)
     } catch (error) {
       console.error('Failed to add words:', error)
@@ -158,7 +179,7 @@ export default function VocabularyDetail() {
     try {
       await deleteWordsBatch(id, [singleWordToDelete.id])
       toast.success('Word deleted successfully')
-      fetchWords() // Refresh the list
+      fetchWords()
       setSingleWordToDelete(null)
     } catch (error) {
       console.error('Failed to delete word:', error)
@@ -171,7 +192,7 @@ export default function VocabularyDetail() {
     try {
       await updateWordsBatch(id, updates)
       toast.success('Word updated successfully')
-      fetchWords() // Refresh the list
+      fetchWords()
       setSingleWordToEdit(null)
     } catch (error) {
       console.error('Failed to update word:', error)
@@ -270,9 +291,27 @@ export default function VocabularyDetail() {
                       onChange={handleSelectAll}
                     />
                   </th>
-                  <th>Word</th>
-                  <th>Translation</th>
-                  <th>Status</th>
+                  <SortableColumnHeader
+                    label="Word"
+                    column="word"
+                    currentSortBy={sortBy}
+                    currentSortOrder={sortOrder}
+                    onSort={handleSort}
+                  />
+                  <SortableColumnHeader
+                    label="Translation"
+                    column="translation"
+                    currentSortBy={sortBy}
+                    currentSortOrder={sortOrder}
+                    onSort={handleSort}
+                  />
+                  <SortableColumnHeader
+                    label="Status"
+                    column="status"
+                    currentSortBy={sortBy}
+                    currentSortOrder={sortOrder}
+                    onSort={handleSort}
+                  />
                   <th>Examples</th>
                   <th>Actions</th>
                 </tr>

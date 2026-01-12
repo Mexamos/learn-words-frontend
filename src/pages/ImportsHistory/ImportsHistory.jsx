@@ -1,5 +1,5 @@
 import './ImportsHistory.css';
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import {
   Box,
@@ -19,6 +19,7 @@ import { getImportHistory, markImportAsViewed } from '../../services/wordsServic
 import Layout from '../../components/Layout/Layout';
 import ImportCard from './components/ImportCard';
 import WordSelectionModal from '../../components/WordSelectionModal/WordSelectionModal';
+import { useTasks } from '../../contexts/TasksContext';
 
 const TYPE_OPTIONS = [
   { label: 'All Types', value: 'all' },
@@ -35,12 +36,16 @@ const VIEWED_OPTIONS = [
 
 export default function ImportsHistory() {
   const navigate = useNavigate();
+  const { activeTasks } = useTasks();
   const [imports, setImports] = useState([]);
   const [loading, setLoading] = useState(true);
   const [page, setPage] = useState(1);
   const [total, setTotal] = useState(0);
   const [typeFilter, setTypeFilter] = useState(['all']);
   const [viewedFilter, setViewedFilter] = useState(['unviewed']); // Default: Unviewed
+  
+  // Track previous active tasks count to detect changes
+  const prevActiveTasksCountRef = useRef(activeTasks.length);
   
   // Modal state
   const [isModalOpen, setIsModalOpen] = useState(false);
@@ -107,6 +112,23 @@ export default function ImportsHistory() {
   useEffect(() => {
     loadImports();
   }, [page, typeFilter, viewedFilter]);
+
+  // Watch for changes in active tasks - reload when a task completes
+  useEffect(() => {
+    const prevCount = prevActiveTasksCountRef.current;
+    const currentCount = activeTasks.length;
+    
+    // If active tasks count decreased, a task likely completed
+    // Reload imports to show the new completed task
+    if (prevCount > currentCount && currentCount >= 0) {
+      console.log('📋 [ImportsHistory] Active task completed, reloading imports list');
+      loadImports();
+    }
+    
+    // Update ref for next comparison
+    prevActiveTasksCountRef.current = currentCount;
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [activeTasks.length]);
 
   const handleReviewWords = (task) => {
     if (!task.result?.words || task.result.words.length === 0) {

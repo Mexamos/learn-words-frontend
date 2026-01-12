@@ -1,7 +1,7 @@
 import './Header.css'
 import { useContext, useState, useRef, useEffect } from 'react'
 import { AuthContext } from '../../contexts/AuthContext'
-import UnviewedImportsBadge from './UnviewedImportsBadge'
+import AvailableWordsInfo from './AvailableWordsInfo'
 
 export default function Header({ pageTitle, isSideMenuVisible, onMenuToggle }) {
   const { user, logout } = useContext(AuthContext)
@@ -42,7 +42,7 @@ export default function Header({ pageTitle, isSideMenuVisible, onMenuToggle }) {
       <h1 className="header-component-title">{pageTitle}</h1>
 
       <div className="avatar-wrapper" style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
-        <UnviewedImportsBadge />
+        <AvailableWordsInfo />
         
         <div onClick={() => setMenuOpen(o => !o)} className="avatar-button">
           {avatar}

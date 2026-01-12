@@ -24,3 +24,5 @@ export const LEARNING_MODES = {
 export const LEARNING_MODE_VALUES = Object.values(LEARNING_MODES);
 
 export const WORD_FETCH_MULTIPLIER = 2;
+
+export const DEFAULT_WORD_COUNT = 5;

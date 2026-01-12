@@ -14,7 +14,7 @@ import NavigationButtons from './components/NavigationButtons'
 import { getVocabularies, getAllWords } from '../../services/wordsService'
 import { getLearningModes, createLearningLog } from '../../services/learningService'
 import { LANGUAGE_NAMES } from '../../constants/languages'
-import { LEARNING_MODES, WORD_FETCH_MULTIPLIER } from './constants'
+import { LEARNING_MODES, DEFAULT_WORD_COUNT } from './constants'
 import { shuffleArray } from '../../utils/helpers'
 
 export default function LearnWords() {
@@ -25,7 +25,7 @@ export default function LearnWords() {
   const [selectedModeIds, setSelectedModeIds] = useState([])
   const [currentModeIndex, setCurrentModeIndex] = useState(0)
   const [selectedVocabulary, setSelectedVocabulary] = useState([])
-  const [wordCount, setWordCount] = useState(10)
+  const [wordCount, setWordCount] = useState(DEFAULT_WORD_COUNT)
   const [isLoading, setIsLoading] = useState(true)
   const [isLearning, setIsLearning] = useState(false)
   const [showCongratulations, setShowCongratulations] = useState(false)
@@ -73,38 +73,43 @@ export default function LearnWords() {
       return
     }
 
+    if (!selectedModes || selectedModes.length === 0) {
+      toast.error('Please select at least one learning mode')
+      return
+    }
+
     try {
       setIsLoading(true)
-      const selectedCount = Math.max(1, parseInt(wordCount) || 10)
+      const selectedCount = Math.max(1, parseInt(wordCount))
       
-      // Request more words than needed for better randomization
-      // This ensures we have variety even after shuffling
-      const requestLimit = selectedCount * WORD_FETCH_MULTIPLIER
-      let fetchedWords = await getAllWords(parseInt(selectedVocabulary[0]), requestLimit, true)
-      if (fetchedWords.length === 0) {
-        fetchedWords = await getAllWords(parseInt(selectedVocabulary[0]), requestLimit, false)
-      }
+      // Get words (backend will handle prioritization: review words first, then new words)
+      const fetchedWords = await getAllWords(
+        parseInt(selectedVocabulary[0]), selectedCount
+      )
 
       if (fetchedWords.length === 0) {
-        toast.error('This vocabulary has no words. Please add some words first.')
+        toast.info('No words available to learn right now. Try again tomorrow!')
         setIsLoading(false)
         return
       }
-
-      // Shuffle the fetched words
-      const shuffled = shuffleArray(fetchedWords)
       
-      // Take only the requested amount (or all if less available)
-      const limitedWords = shuffled.slice(0, Math.min(selectedCount, shuffled.length))
-      
-      setWords(limitedWords)
+      setWords(fetchedWords)
       setCurrentIndex(0)
       setModeResults({})
       setWordOptions({}) // Reset options when starting new session
       setIsLearning(true)
     } catch (error) {
       console.error('Failed to fetch words:', error)
-      toast.error('Failed to load words')
+      
+      // Handle 429 Too Many Requests
+      if (error.response?.status === 429) {
+        const detail = error.response.data.detail
+        toast.error(
+          `Daily limit reached! You've studied ${detail.learned_today}/${detail.daily_limit} words today.`
+        )
+      } else {
+        toast.error('Failed to load words')
+      }
     } finally {
       setIsLoading(false)
     }
@@ -112,13 +117,33 @@ export default function LearnWords() {
 
   const handleModeToggle = useCallback((mode, checked) => {
     if (checked) {
-      setSelectedModes(prev => [...prev, mode.code])
-      setSelectedModeIds(prev => [...prev, mode.id])
+      setSelectedModes(prev => {
+        const updated = [...prev, mode.code]
+        return updated.sort((a, b) => {
+          const modeA = learningModes.find(m => m.code === a)
+          const modeB = learningModes.find(m => m.code === b)
+          return (modeA?.id || 0) - (modeB?.id || 0)
+        })
+      })
+      setSelectedModeIds(prev => {
+        const updated = [...prev, mode.id]
+        return updated.sort((a, b) => a - b)
+      })
     } else {
-      setSelectedModes(prev => prev.filter(m => m !== mode.code))
-      setSelectedModeIds(prev => prev.filter(id => id !== mode.id))
+      setSelectedModes(prev => {
+        const updated = prev.filter(m => m !== mode.code)
+        return updated.sort((a, b) => {
+          const modeA = learningModes.find(m => m.code === a)
+          const modeB = learningModes.find(m => m.code === b)
+          return (modeA?.id || 0) - (modeB?.id || 0)
+        })
+      })
+      setSelectedModeIds(prev => {
+        const updated = prev.filter(id => id !== mode.id)
+        return updated.sort((a, b) => a - b)
+      })
     }
-  }, [])
+  }, [learningModes])
 
   const createFinalLearningLog = useCallback(async () => {
     try {

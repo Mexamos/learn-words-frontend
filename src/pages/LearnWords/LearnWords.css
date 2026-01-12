@@ -322,4 +322,40 @@
   }
 }
 
+.available-words-info {
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  border: 2px solid #5a67d8;
+  border-radius: 12px;
+  padding: 1.25rem;
+  margin-bottom: 1.5rem;
+  color: white;
+  box-shadow: 0 4px 12px rgba(102, 126, 234, 0.2);
+}
+
+.available-words-info p {
+  margin: 0.5rem 0;
+  font-size: 0.95rem;
+  font-weight: 500;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.available-words-info p:first-child {
+  margin-top: 0;
+}
+
+.available-words-info p:last-child {
+  margin-bottom: 0;
+}
+
+.overdue-warning {
+  color: #fef5e7;
+  font-weight: 600;
+  background: rgba(255, 255, 255, 0.15);
+  padding: 0.5rem;
+  border-radius: 6px;
+  margin-top: 0.75rem !important;
+  border-left: 3px solid #f39c12;
+}
 

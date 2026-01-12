@@ -23,3 +23,36 @@ export const createLearningLog = async (vocabularyId, learningModeIds, words) =>
   return response.data
 }
 
+/**
+ * Get aggregated information about available words for learning across all vocabularies
+ * @returns {Promise<{
+ *   review_words_count: number,
+ *   new_words_count: number,
+ *   learned_today: number,
+ *   remaining_today: number,
+ *   daily_total_limit: number,
+ *   overdue_count: number
+ * }>}
+ */
+export const getAllAvailableWordsInfo = async () => {
+  const response = await api.get('/api/v1/available-words-info')
+  return response.data
+}
+
+/**
+ * Get information about available words for learning
+ * @param {number} vocabularyId - The vocabulary ID
+ * @returns {Promise<{
+ *   review_words_count: number,
+ *   new_words_count: number,
+ *   learned_today: number,
+ *   remaining_today: number,
+ *   daily_total_limit: number,
+ *   overdue_count: number
+ * }>}
+ */
+export const getAvailableWordsInfo = async (vocabularyId) => {
+  const response = await api.get(`/api/v1/vocabularies/${vocabularyId}/available-words-info`)
+  return response.data
+}
+
