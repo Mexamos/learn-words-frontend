@@ -23,6 +23,14 @@
   color: #4a5568;
 }
 
+.edit-word-item > div {
+  margin-bottom: 0.75rem;
+}
+
+.edit-word-item > div:last-child {
+  margin-bottom: 0;
+}
+
 .edit-word-input,
 .edit-word-textarea {
   width: 100%;
@@ -30,7 +38,6 @@
   border: 1px solid #cbd5e0;
   border-radius: 4px;
   font-size: 0.95rem;
-  margin-bottom: 0.75rem;
 }
 
 .edit-word-input:focus,
@@ -48,9 +55,32 @@
 
 .edit-words-modal-footer {
   display: flex;
-  gap: 0.75rem;
   justify-content: flex-end;
   padding-top: 1rem;
-  border-top: 1px solid #e2e8f0;
 }
 
+/* Responsive adjustments for specific content */
+@media (max-width: 768px) {
+  .edit-words-modal-content {
+    max-height: 65vh;
+  }
+}
+
+@media (max-width: 480px) {
+  .edit-word-item {
+    padding: 0.75rem;
+  }
+
+  .edit-word-textarea {
+    min-height: 80px;
+  }
+
+  .edit-words-buttons-container {
+    flex-direction: column !important;
+    width: 100%;
+  }
+
+  .edit-words-modal-footer button {
+    width: 100%;
+  }
+}

@@ -1,12 +1,24 @@
 import './Layout.css'
 import { useState, useEffect } from 'react'
+import { useResponsive } from '../../constants/breakpoints'
 import Header from '../Header/Header'
 import SideMenu from '../SideMenu/SideMenu'
 import { getUnviewedImportsCount } from '../../services/wordsService'
 
 export default function Layout({ pageTitle, children, fullWidth = false }) {
-  const [sidebarVisible, setSidebarVisible] = useState(true);
+  const { isMobileMenu } = useResponsive()
+  const [sidebarVisible, setSidebarVisible] = useState(!isMobileMenu);
   const [unviewedCount, setUnviewedCount] = useState(0);
+
+  // Управление видимостью sidebar в зависимости от размера экрана
+  useEffect(() => {
+    // На desktop sidebar открыт по умолчанию, на mobile закрыт
+    if (!isMobileMenu && !sidebarVisible) {
+      setSidebarVisible(true)
+    } else if (isMobileMenu && sidebarVisible) {
+      setSidebarVisible(false)
+    }
+  }, [isMobileMenu])
 
   // Load unviewed count for badge
   useEffect(() => {

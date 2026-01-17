@@ -28,3 +28,25 @@
   background-color: rgba(100, 100, 100, 0.7);
 }
 
+/* Mobile responsive styles */
+@media (max-width: 480px) {
+  .word-selection-dialog-body {
+    display: flex !important;
+    flex-direction: column !important;
+    flex: 1 !important;
+    min-height: 0 !important;
+  }
+
+  .word-selection-content {
+    display: flex !important;
+    flex-direction: column !important;
+    flex: 1 !important;
+    min-height: 0 !important;
+  }
+
+  .words-list-container {
+    max-height: none !important;
+    flex: 1 !important;
+    min-height: 0 !important;
+  }
+}

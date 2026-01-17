@@ -67,7 +67,15 @@ root.render(
         <AuthProvider>
           <PWAUpdatePrompt />
           <App />
-          <Toaster position="top-right" richColors />
+          <Toaster 
+            position="top-center"
+            richColors
+            expand={false}
+            visibleToasts={3}
+            closeButton={false}
+            offset="16px"
+            gap={12}
+          />
         </AuthProvider>
       </BrowserRouter>
     </ChakraProvider>

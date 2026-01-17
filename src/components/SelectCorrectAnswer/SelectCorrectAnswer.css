@@ -100,6 +100,20 @@
   .select-correct-answer-options .option {
     padding: 1rem;
     font-size: 1rem;
+    min-height: 52px;
+  }
+}
+
+@media (max-width: 480px) {
+  .select-correct-answer-word {
+    font-size: 1.25rem;
+    padding: 0.875rem 1.25rem;
+  }
+
+  .select-correct-answer-options .option {
+    padding: 0.875rem;
+    font-size: 0.95rem;
+    min-height: 48px;
   }
 }
 

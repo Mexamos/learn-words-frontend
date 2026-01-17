@@ -1,7 +1,7 @@
 import './EditWordsModal.css'
 import { useState, useEffect } from 'react'
 import { DialogRoot, DialogBackdrop, DialogPositioner, DialogContent, DialogHeader, DialogTitle, DialogBody, DialogActionTrigger } from '../ui/dialog'
-import { Button, Spinner, HStack, NativeSelect } from '@chakra-ui/react'
+import { Button, Spinner, HStack, Select, createListCollection } from '@chakra-ui/react'
 
 const WORD_STATUSES = [
   { value: 'new', label: 'New' },
@@ -12,6 +12,11 @@ const WORD_STATUSES = [
 export default function EditWordsModal({ isOpen, onClose, onSave, words }) {
   const [editedWords, setEditedWords] = useState([])
   const [isSaving, setIsSaving] = useState(false)
+
+  const statusCollection = createListCollection({
+    items: WORD_STATUSES,
+    selectionMode: 'single',
+  })
 
   useEffect(() => {
     if (words && words.length > 0) {
@@ -79,7 +84,12 @@ export default function EditWordsModal({ isOpen, onClose, onSave, words }) {
     >
       <DialogBackdrop />
       <DialogPositioner>
-        <DialogContent maxW="700px">
+        <DialogContent 
+          maxW={{ base: 'full', sm: '95vw', md: '700px' }}
+          maxH={{ base: '100vh', md: 'auto' }}
+          borderRadius={{ base: 0, md: 'md' }}
+          m={{ base: 0, md: 4 }}
+        >
           <DialogHeader>
             <DialogTitle>Edit Words ({editedWords.length})</DialogTitle>
           </DialogHeader>
@@ -115,20 +125,34 @@ export default function EditWordsModal({ isOpen, onClose, onSave, words }) {
 
                   <div>
                     <label className="edit-word-label">Status</label>
-                    <NativeSelect.Root size="md" width="100%" bg="white">
-                      <NativeSelect.Field
-                        value={word.status}
-                        onChange={(e) => handleFieldChange(index, 'status', e.target.value)}
-                        disabled={isSaving}
-                      >
-                        {WORD_STATUSES.map((status) => (
-                          <option key={status.value} value={status.value}>
-                            {status.label}
-                          </option>
-                        ))}
-                      </NativeSelect.Field>
-                      <NativeSelect.Indicator />
-                    </NativeSelect.Root>
+                    <Select.Root
+                      collection={statusCollection}
+                      value={[word.status]}
+                      onValueChange={(e) => handleFieldChange(index, 'status', e.value[0])}
+                      width="100%"
+                      disabled={isSaving}
+                      positioning={{ sameWidth: true }}
+                    >
+                      <Select.Control bg="white">
+                        <Select.Trigger>
+                          <Select.ValueText />
+                        </Select.Trigger>
+                        <Select.IndicatorGroup>
+                          <Select.Indicator />
+                        </Select.IndicatorGroup>
+                      </Select.Control>
+
+                      <Select.Positioner>
+                        <Select.Content>
+                          {statusCollection.items.map((status) => (
+                            <Select.Item item={status} key={status.value}>
+                              {status.label}
+                              <Select.ItemIndicator />
+                            </Select.Item>
+                          ))}
+                        </Select.Content>
+                      </Select.Positioner>
+                    </Select.Root>
                   </div>
 
                   <div>
@@ -159,7 +183,7 @@ Example 3"
             </div>
 
             <div className="edit-words-modal-footer">
-              <HStack gap={3}>
+              <HStack gap={3} className="edit-words-buttons-container">
                 <DialogActionTrigger asChild>
                   <Button variant="outline" disabled={isSaving} onClick={onClose}>
                     Cancel

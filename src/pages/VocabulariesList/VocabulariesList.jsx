@@ -10,7 +10,8 @@ import {
   VStack,
   HStack,
   Input,
-  NativeSelect,
+  Select,
+  createListCollection,
 } from '@chakra-ui/react'
 import { toast } from 'sonner'
 import Layout from '../../components/Layout/Layout'
@@ -42,6 +43,12 @@ export default function VocabulariesList() {
   const [isLoading, setIsLoading] = useState(true)
   const [isCreating, setIsCreating] = useState(false)
   const [isDeleting, setIsDeleting] = useState(false)
+  
+  // Language collection for Select components
+  const languageCollection = createListCollection({
+    items: AVAILABLE_LANGUAGES,
+    selectionMode: 'single',
+  })
   
   // Create vocabulary modal state
   const [isCreateOpen, setIsCreateOpen] = useState(false)
@@ -194,7 +201,12 @@ export default function VocabulariesList() {
       <Dialog.Root open={isCreateOpen} onOpenChange={(e) => e.open ? setIsCreateOpen(true) : handleCreateModalClose()}>
         <Dialog.Backdrop />
         <Dialog.Positioner>
-          <Dialog.Content maxW="500px">
+          <Dialog.Content 
+            maxW={{ base: 'full', sm: '95vw', md: '500px' }}
+            maxH={{ base: '100vh', md: 'auto' }}
+            borderRadius={{ base: 0, md: 'md' }}
+            m={{ base: 0, md: 4 }}
+          >
             <Dialog.Header>
               <Dialog.Title>Create New Vocabulary</Dialog.Title>
             </Dialog.Header>
@@ -206,40 +218,68 @@ export default function VocabulariesList() {
                   <Text fontSize="sm" fontWeight="medium" mb={2}>
                     Language From
                   </Text>
-                  <NativeSelect.Root size="lg" width="100%">
-                    <NativeSelect.Field
-                      value={formData.language_from}
-                      onChange={(e) => updateField('language_from', e.target.value)}
-                      disabled={isCreating}
-                    >
-                      {AVAILABLE_LANGUAGES.map((lang) => (
-                        <option key={lang.value} value={lang.value}>
-                          {lang.label}
-                        </option>
-                      ))}
-                    </NativeSelect.Field>
-                    <NativeSelect.Indicator />
-                  </NativeSelect.Root>
+                  <Select.Root
+                    collection={languageCollection}
+                    value={[formData.language_from]}
+                    onValueChange={(e) => updateField('language_from', e.value[0])}
+                    width="100%"
+                    disabled={isCreating}
+                    positioning={{ sameWidth: true }}
+                  >
+                    <Select.Control bg="white">
+                      <Select.Trigger>
+                        <Select.ValueText />
+                      </Select.Trigger>
+                      <Select.IndicatorGroup>
+                        <Select.Indicator />
+                      </Select.IndicatorGroup>
+                    </Select.Control>
+
+                    <Select.Positioner>
+                      <Select.Content>
+                        {languageCollection.items.map((lang) => (
+                          <Select.Item item={lang} key={lang.value}>
+                            {lang.label}
+                            <Select.ItemIndicator />
+                          </Select.Item>
+                        ))}
+                      </Select.Content>
+                    </Select.Positioner>
+                  </Select.Root>
                 </Box>
 
                 <Box>
                   <Text fontSize="sm" fontWeight="medium" mb={2}>
                     Language To
                   </Text>
-                  <NativeSelect.Root size="lg" width="100%">
-                    <NativeSelect.Field
-                      value={formData.language_to}
-                      onChange={(e) => updateField('language_to', e.target.value)}
-                      disabled={isCreating}
-                    >
-                      {AVAILABLE_LANGUAGES.map((lang) => (
-                        <option key={lang.value} value={lang.value}>
-                          {lang.label}
-                        </option>
-                      ))}
-                    </NativeSelect.Field>
-                    <NativeSelect.Indicator />
-                  </NativeSelect.Root>
+                  <Select.Root
+                    collection={languageCollection}
+                    value={[formData.language_to]}
+                    onValueChange={(e) => updateField('language_to', e.value[0])}
+                    width="100%"
+                    disabled={isCreating}
+                    positioning={{ sameWidth: true }}
+                  >
+                    <Select.Control bg="white">
+                      <Select.Trigger>
+                        <Select.ValueText />
+                      </Select.Trigger>
+                      <Select.IndicatorGroup>
+                        <Select.Indicator />
+                      </Select.IndicatorGroup>
+                    </Select.Control>
+
+                    <Select.Positioner>
+                      <Select.Content>
+                        {languageCollection.items.map((lang) => (
+                          <Select.Item item={lang} key={lang.value}>
+                            {lang.label}
+                            <Select.ItemIndicator />
+                          </Select.Item>
+                        ))}
+                      </Select.Content>
+                    </Select.Positioner>
+                  </Select.Root>
                 </Box>
 
                 {!isValid && (
@@ -290,7 +330,12 @@ export default function VocabulariesList() {
       >
         <Dialog.Backdrop />
         <Dialog.Positioner>
-          <Dialog.Content maxW="500px">
+          <Dialog.Content 
+            maxW={{ base: 'full', sm: '95vw', md: '500px' }}
+            maxH={{ base: '100vh', md: 'auto' }}
+            borderRadius={{ base: 0, md: 'md' }}
+            m={{ base: 0, md: 4 }}
+          >
             <Dialog.Header>
               <Dialog.Title>Delete Vocabulary</Dialog.Title>
             </Dialog.Header>

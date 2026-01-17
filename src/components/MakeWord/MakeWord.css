@@ -206,3 +206,32 @@
   }
 }
 
+@media (max-width: 480px) {
+  .make-word-container {
+    padding: 15px;
+    gap: 15px;
+  }
+
+  .make-word-translation {
+    font-size: 1.25rem;
+    padding: 12px;
+  }
+
+  .make-word-slot,
+  .make-word-letter {
+    width: 40px;
+    height: 50px;
+    font-size: 1.25rem;
+  }
+
+  .error-mark {
+    width: 28px;
+    height: 28px;
+    font-size: 1rem;
+  }
+
+  .make-word-result {
+    font-size: 1rem;
+    padding: 10px 15px;
+  }
+}

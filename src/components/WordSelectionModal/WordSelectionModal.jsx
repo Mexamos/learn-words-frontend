@@ -160,7 +160,13 @@ export default function WordSelectionModal({ isOpen, onClose, words = [], langua
     <Dialog.Root open={isOpen} onOpenChange={(e) => !isLoading && e.open === false && handleClose()}>
       <Dialog.Backdrop />
       <Dialog.Positioner>
-        <Dialog.Content maxW="600px" className="word-selection-modal">
+        <Dialog.Content 
+          maxW={{ base: 'full', sm: '95vw', md: '600px' }}
+          maxH={{ base: '100vh', md: 'auto' }}
+          borderRadius={{ base: 0, md: 'md' }}
+          m={{ base: 0, md: 4 }}
+          className="word-selection-modal"
+        >
           <Dialog.Header>
             <VStack alignItems="flex-start" gap={1}>
               <Heading size="lg">Select words to add to the dictionary</Heading>
@@ -179,7 +185,7 @@ export default function WordSelectionModal({ isOpen, onClose, words = [], langua
             )}
           </Dialog.Header>
 
-          <Dialog.Body>
+          <Dialog.Body className="word-selection-dialog-body">
             {isLoading ? (
               <Box 
                 display="flex" 
@@ -193,12 +199,12 @@ export default function WordSelectionModal({ isOpen, onClose, words = [], langua
                 <Text color="fg.muted">Adding words to vocabulary...</Text>
               </Box>
             ) : (
-              <VStack alignItems="stretch" gap={4}>
+              <VStack alignItems="stretch" gap={4} className="word-selection-content">
                 <HStack justifyContent="space-between">
                   <Text fontSize="sm" color="fg.muted">
                     {selectedWords.size} of {words.length} words selected
                   </Text>
-                  <HStack gap={2}>
+                  <HStack gap={2} minH={"40px"}>
                     <Button variant="ghost" size="sm" onClick={handleSelectAll}>
                       Select All
                     </Button>

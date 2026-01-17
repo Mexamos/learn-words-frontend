@@ -7,10 +7,52 @@
   flex-direction: column;
   width: 0;
   overflow: hidden;
-  transition: width 0.3s ease;
+  transition: width 0.3s ease, transform 0.3s ease;
 }
+
+/* Desktop: статичный sidebar */
 .side-menu.open {
   min-width: 200px;
+}
+
+/* Mobile: overlay drawer */
+.side-menu.mobile {
+  position: fixed;
+  top: 0;
+  left: 0;
+  height: 100vh;
+  width: 0;
+  z-index: 1000;
+  transform: translateX(-100%);
+  box-shadow: 4px 0 12px rgba(0, 0, 0, 0.15);
+}
+
+.side-menu.mobile.open {
+  width: 280px;
+  min-width: 280px;
+  max-width: 85vw;
+  transform: translateX(0);
+}
+
+/* Backdrop */
+.side-menu-backdrop {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background-color: rgba(0, 0, 0, 0.5);
+  z-index: 999;
+  animation: fadeIn 0.3s ease;
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
 }
 
 .side-menu-header {
@@ -27,11 +69,22 @@
   border-radius: 6px;
   margin-right: 5px;
   padding: 5px;
+  min-width: 44px;
+  min-height: 44px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: background-color 0.2s ease;
 }
 
 .side-menu-hide-button:hover {
   background-color: #cbcbcb54;
   border-radius: 6px;
+}
+
+.side-menu-hide-button:focus {
+  outline: 2px solid #4299e1;
+  outline-offset: 2px;
 }
 
 .menu-nav {
@@ -58,11 +111,22 @@
   color: #2d3748;
   font-size: 1rem;
   white-space: nowrap;
+  min-height: 48px;
+  transition: background-color 0.2s ease;
 }
 
 .menu-link.active,
 .menu-link:hover {
   background-color: #edf2f7;
+}
+
+/* Touch-friendly на мобильных */
+@media (max-width: 992px) {
+  .menu-link {
+    padding: 1rem 1.5rem;
+    min-height: 52px;
+    font-size: 1.05rem;
+  }
 }
 
 .menu-link-label {

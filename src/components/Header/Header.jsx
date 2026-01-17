@@ -1,10 +1,12 @@
 import './Header.css'
 import { useContext, useState, useRef, useEffect } from 'react'
 import { AuthContext } from '../../contexts/AuthContext'
+import { useResponsive } from '../../constants/breakpoints'
 import AvailableWordsInfo from './AvailableWordsInfo'
 
 export default function Header({ pageTitle, isSideMenuVisible, onMenuToggle }) {
   const { user, logout } = useContext(AuthContext)
+  const { isMobileMenu } = useResponsive()
   const [menuOpen, setMenuOpen] = useState(false)
   const menuRef = useRef(null)
 
@@ -28,25 +30,33 @@ export default function Header({ pageTitle, isSideMenuVisible, onMenuToggle }) {
 
   return (
     <header className="header-component" ref={menuRef}>
-      {!isSideMenuVisible && (
+      {/* Hamburger menu - показываем только на mobile/tablet (<992px) и когда sidebar не виден */}
+      {(isMobileMenu || !isSideMenuVisible) && (
         <div className='header-side-menu-toggle-container'>
-          <div
+          <button
             className="menu-toggle-button"
             onClick={onMenuToggle}
+            aria-label="Toggle menu"
+            aria-expanded={isSideMenuVisible}
           >
             ☰
-          </div>
+          </button>
         </div>
       )}
 
       <h1 className="header-component-title">{pageTitle}</h1>
 
-      <div className="avatar-wrapper" style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+      <div className="avatar-wrapper">
         <AvailableWordsInfo />
         
-        <div onClick={() => setMenuOpen(o => !o)} className="avatar-button">
+        <button 
+          onClick={() => setMenuOpen(o => !o)} 
+          className="avatar-button"
+          aria-label="User menu"
+          aria-expanded={menuOpen}
+        >
           {avatar}
-        </div>
+        </button>
         {menuOpen && (
           <ul className="dropdown-menu">
             <li>

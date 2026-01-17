@@ -78,11 +78,13 @@ export default function ImportCard({ task, onReview, onMarkAsViewed }) {
       <HStack
         justifyContent="space-between"
         alignItems="center"
-        px={4}
-        py={3}
+        px={{ base: 3, md: 4 }}
+        py={{ base: 2, md: 3 }}
         bg={task.viewed ? 'gray.50' : 'blue.50'}
         borderBottom="1px solid"
         borderColor="gray.200"
+        flexWrap={{ base: 'wrap', sm: 'nowrap' }}
+        gap={{ base: 2, sm: 0 }}
       >
         <HStack gap={3}>
           <Badge 
@@ -107,7 +109,7 @@ export default function ImportCard({ task, onReview, onMarkAsViewed }) {
       </HStack>
 
       {/* Content */}
-      <VStack alignItems="stretch" gap={3} p={4}>
+      <VStack alignItems="stretch" gap={3} p={{ base: 3, md: 4 }}>
         {/* Source info - prominent */}
         <Text fontSize="md" fontWeight="semibold" color="gray.800">
           {getSourceInfo()}
@@ -148,11 +150,17 @@ export default function ImportCard({ task, onReview, onMarkAsViewed }) {
 
         {/* Actions */}
         {task.status === 'completed' && (hasWords || !task.viewed) && (
-          <HStack gap={2} mt={2}>
+          <HStack 
+            gap={2} 
+            mt={2}
+            flexDirection={{ base: 'column', sm: 'row' }}
+            alignItems="stretch"
+          >
             {hasWords && (
               <Button
                 colorPalette="blue"
-                size="md"
+                size={{ base: 'md', sm: 'md' }}
+                width={{ base: '100%', sm: 'auto' }}
                 onClick={() => onReview(task)}
               >
                 Review words →
@@ -162,7 +170,8 @@ export default function ImportCard({ task, onReview, onMarkAsViewed }) {
             {!task.viewed && (
               <Button
                 variant="outline"
-                size="md"
+                size={{ base: 'md', sm: 'md' }}
+                width={{ base: '100%', sm: 'auto' }}
                 onClick={() => onMarkAsViewed(task.id)}
               >
                 Mark as viewed

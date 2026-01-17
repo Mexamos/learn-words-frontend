@@ -142,7 +142,12 @@ export default function AddWordsModal({ isOpen, onClose, onAdd, vocabulary }) {
     >
       <Dialog.Backdrop />
       <Dialog.Positioner>
-        <Dialog.Content maxW="700px">
+        <Dialog.Content 
+          maxW={{ base: 'full', sm: '95vw', md: '700px' }}
+          maxH={{ base: '100vh', md: 'auto' }}
+          borderRadius={{ base: 0, md: 'md' }}
+          m={{ base: 0, md: 4 }}
+        >
           <Dialog.Header>
             <Dialog.Title>Add New Words</Dialog.Title>
           </Dialog.Header>

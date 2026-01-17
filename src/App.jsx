@@ -1,6 +1,7 @@
 import { Routes, Route } from 'react-router-dom'
 import ProtectedRoute from './components/ProtectedRoute'
 import LanguageSetupGuard from './components/LanguageSetupGuard/LanguageSetupGuard'
+import BreakpointIndicator from './components/BreakpointIndicator'
 import { TasksProvider } from './contexts/TasksContext'
 import Login from './pages/Auth/Login'
 import Dashboard from './pages/Dashboard/Dashboard'
@@ -13,6 +14,7 @@ import LearnWords from './pages/LearnWords/LearnWords'
 export default function App() {
   return (
     <TasksProvider>
+      <BreakpointIndicator />
       <Routes>
         <Route path="/login" element={<Login />} />
         <Route

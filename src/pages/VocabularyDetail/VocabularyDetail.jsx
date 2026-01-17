@@ -323,7 +323,7 @@ export default function VocabularyDetail() {
                     className={selectedWordIds.has(word.id) ? 'selected' : ''}
                     onClick={() => handleSelectWord(word.id)}
                   >
-                    <td onClick={(e) => e.stopPropagation()}>
+                    <td onClick={(e) => e.stopPropagation()} className="checkbox-cell">
                       <input
                         type="checkbox"
                         className="word-checkbox"
@@ -331,36 +331,45 @@ export default function VocabularyDetail() {
                         onChange={() => handleSelectWord(word.id)}
                       />
                     </td>
-                    <td>{word.word}</td>
-                    <td>{word.translation}</td>
-                    <td>
+                    <td data-label="Word">
+                      <span className="cell-content">{word.word}</span>
+                    </td>
+                    <td data-label="Translation">
+                      <span className="cell-content">{word.translation}</span>
+                    </td>
+                    <td data-label="Status">
                       <span className={`status-badge ${word.status}`}>
                         {word.status}
                       </span>
                     </td>
                     <td 
+                      data-label="Examples"
                       className="examples-cell"
                       title={word.examples && word.examples.length > 0 ? word.examples.join(', ') : '-'}
                     >
-                      {word.examples && word.examples.length > 0
-                        ? word.examples.join('\n')
-                        : '-'}
+                      <span className="cell-content">
+                        {word.examples && word.examples.length > 0
+                          ? word.examples.join('\n')
+                          : '-'}
+                      </span>
                     </td>
-                    <td className="actions-cell" onClick={(e) => e.stopPropagation()}>
-                      <button 
-                        className="action-btn edit-btn"
-                        onClick={() => handleEditSingleWord(word)}
-                        title="Edit word"
-                      >
-                        ✏️
-                      </button>
-                      <button 
-                        className="action-btn delete-btn"
-                        onClick={() => handleDeleteSingleWord(word)}
-                        title="Delete word"
-                      >
-                        🗑️
-                      </button>
+                    <td data-label="Actions" className="actions-cell" onClick={(e) => e.stopPropagation()}>
+                      <div className="actions-buttons">
+                        <button 
+                          className="action-btn edit-btn"
+                          onClick={() => handleEditSingleWord(word)}
+                          title="Edit word"
+                        >
+                          ✏️
+                        </button>
+                        <button 
+                          className="action-btn delete-btn"
+                          onClick={() => handleDeleteSingleWord(word)}
+                          title="Delete word"
+                        >
+                          🗑️
+                        </button>
+                      </div>
                     </td>
                   </tr>
                 ))}

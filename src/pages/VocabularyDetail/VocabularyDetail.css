@@ -226,12 +226,18 @@
 }
 
 /* Action buttons styles */
+.actions-buttons {
+  display: flex;
+  gap: 0.25rem;
+  align-items: center;
+}
+
 .action-btn {
   background: none;
   border: none;
   cursor: pointer;
   padding: 0.25rem;
-  margin: 0 0.125rem;
+  margin: 0;
   border-radius: 4px;
   transition: all 0.15s ease;
   display: inline-flex;
@@ -255,3 +261,262 @@
   background-color: #fed7d7;
 }
 
+/* Responsive Styles */
+@media (max-width: 768px) {
+  .vocabulary-header {
+    margin-bottom: 1.5rem;
+  }
+
+  .vocabulary-info {
+    align-items: flex-start;
+    gap: 0.5rem;
+  }
+
+  .search-and-actions {
+    flex-direction: column;
+    gap: 0.75rem;
+  }
+
+  .search-input {
+    min-width: 100%;
+  }
+
+  .actions-group {
+    width: 100%;
+    justify-content: stretch;
+  }
+
+  .actions-group > * {
+    flex: 1;
+  }
+
+  /* Карточный вид для таблицы на мобильных */
+  .words-table-container {
+    overflow-x: visible;
+    border: none;
+    background: transparent;
+  }
+
+  .words-table {
+    min-width: auto;
+  }
+
+  /* Сброс фиксированных ширин колонок */
+  .words-table th:first-child,
+  .words-table td:first-child,
+  .words-table th:nth-child(2),
+  .words-table td:nth-child(2),
+  .words-table th:nth-child(3),
+  .words-table td:nth-child(3),
+  .words-table th:nth-child(4),
+  .words-table td:nth-child(4),
+  .words-table th:nth-child(5),
+  .words-table td:nth-child(5),
+  .words-table th:nth-child(6),
+  .words-table td:nth-child(6) {
+    width: auto;
+  }
+
+  .words-table thead {
+    display: none;
+  }
+
+  .words-table,
+  .words-table tbody {
+    display: block;
+    width: 100%;
+  }
+
+  .words-table tr {
+    display: block;
+    margin-bottom: 1rem;
+    background: white;
+    border: 1px solid #e2e8f0;
+    border-radius: 8px;
+    padding: 1rem;
+    padding-right: 3rem;
+    position: relative;
+    cursor: pointer;
+    transition: all 0.2s ease;
+  }
+
+  .words-table tr:hover {
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+  }
+
+  .words-table tr.selected {
+    background: #ebf8ff;
+    border-color: #4299e1;
+    box-shadow: 0 0 0 2px rgba(66, 153, 225, 0.2);
+  }
+
+  .words-table td {
+    display: flex;
+    align-items: flex-start;
+    gap: 0.75rem;
+    padding: 0.625rem 0;
+    border: none;
+    border-bottom: 1px solid #f0f0f0;
+    text-align: left;
+    min-height: 36px;
+  }
+
+  .words-table td:last-child {
+    border-bottom: none;
+  }
+
+  /* Checkbox в правом верхнем углу карточки */
+  .words-table td.checkbox-cell {
+    position: absolute;
+    top: 1rem;
+    right: 1rem;
+    padding: 0;
+    border: none;
+    min-height: auto;
+  }
+
+  .words-table td.checkbox-cell::before {
+    display: none;
+  }
+
+  .word-checkbox {
+    width: 20px;
+    height: 20px;
+    cursor: pointer;
+  }
+
+  /* Labels для данных */
+  .words-table td:not(.checkbox-cell)::before {
+    content: attr(data-label);
+    font-weight: 600;
+    color: #4a5568;
+    font-size: 0.875rem;
+    text-transform: uppercase;
+    letter-spacing: 0.025em;
+    min-width: 110px;
+    flex-shrink: 0;
+  }
+
+  /* Стили для содержимого ячеек */
+  .words-table td:not(.checkbox-cell) {
+    font-size: 0.95rem;
+  }
+
+  .words-table .cell-content {
+    flex: 1;
+    word-wrap: break-word;
+    overflow-wrap: break-word;
+  }
+
+  /* Examples с переносом строк */
+  .words-table .examples-cell .cell-content {
+    white-space: pre-line;
+  }
+
+  /* Actions в ряд */
+  .words-table .actions-cell {
+    align-items: center;
+  }
+
+  .words-table .actions-cell::before {
+    align-self: center;
+  }
+
+  .words-table .actions-buttons {
+    display: flex;
+    gap: 0.5rem;
+    justify-content: flex-start;
+    flex: 1;
+  }
+
+  .action-btn {
+    width: 44px;
+    height: 44px;
+    font-size: 20px;
+    border: 1px solid #e2e8f0;
+  }
+
+  .action-btn:hover {
+    background: #edf2f7;
+  }
+
+  /* Status badge в карточках */
+  .words-table .status-badge {
+    display: inline-block;
+    white-space: nowrap;
+  }
+
+  /* Компактная пагинация */
+  .pagination-container {
+    flex-direction: column;
+    gap: 0.75rem;
+    padding: 0.75rem;
+  }
+
+  .pagination-info {
+    font-size: 0.8rem;
+  }
+
+  .pagination-button {
+    padding: 0.5rem 0.625rem;
+    font-size: 0.8rem;
+  }
+
+  .page-number {
+    padding: 0.5rem;
+    font-size: 0.8rem;
+  }
+}
+
+@media (max-width: 480px) {
+  .vocabulary-header {
+    margin-bottom: 1rem;
+  }
+
+  .search-and-actions {
+    margin-bottom: 1rem;
+  }
+
+  /* Более компактные карточки на маленьких экранах */
+  .words-table tr {
+    padding: 0.875rem;
+    padding-right: 2.75rem;
+    margin-bottom: 0.875rem;
+  }
+
+  .words-table td {
+    gap: 0.5rem;
+    padding: 0.5rem 0;
+    font-size: 0.9rem;
+  }
+
+  .words-table td::before {
+    font-size: 0.8rem;
+    min-width: 95px;
+  }
+
+  .words-table td.checkbox-cell {
+    top: 0.875rem;
+    right: 0.875rem;
+  }
+
+  .word-checkbox {
+    width: 18px;
+    height: 18px;
+  }
+
+  .action-btn {
+    width: 40px;
+    height: 40px;
+    font-size: 18px;
+  }
+
+  .status-badge {
+    font-size: 0.7rem;
+    padding: 0.2rem 0.6rem;
+  }
+
+  .words-table .examples-cell {
+    font-size: 0.85rem;
+  }
+}

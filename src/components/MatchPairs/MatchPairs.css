@@ -143,3 +143,19 @@
   }
 }
 
+@media (max-width: 480px) {
+  .match-pairs-container {
+    padding: 10px;
+  }
+
+  .matched-section {
+    padding: 15px;
+  }
+
+  .match-item,
+  .matched-item {
+    font-size: 0.9rem;
+    padding: 10px 12px;
+    min-height: 48px;
+  }
+}

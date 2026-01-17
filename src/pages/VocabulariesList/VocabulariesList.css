@@ -14,6 +14,21 @@
   margin-bottom: 2rem;
 }
 
+/* Responsive Grid */
+@media (max-width: 768px) {
+  .vocabularies-grid {
+    grid-template-columns: 1fr;
+    gap: 1rem;
+  }
+}
+
+@media (min-width: 769px) and (max-width: 1024px) {
+  .vocabularies-grid {
+    grid-template-columns: repeat(2, 1fr);
+    gap: 1.25rem;
+  }
+}
+
 .vocabulary-card {
   position: relative;
   padding: 1.5rem;
@@ -28,6 +43,18 @@
   box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
   transform: translateY(-2px);
   border-color: #4299e1;
+}
+
+@media (max-width: 768px) {
+  .vocabulary-card {
+    padding: 1.25rem;
+  }
+}
+
+@media (max-width: 480px) {
+  .vocabulary-card {
+    padding: 1rem;
+  }
 }
 
 .vocabulary-delete-btn {
@@ -61,6 +88,12 @@
   margin-bottom: 0.5rem;
   color: #2d3748;
   padding-right: 2rem;
+}
+
+@media (max-width: 480px) {
+  .vocabulary-card-name {
+    font-size: 1.1rem;
+  }
 }
 
 .vocabulary-card-languages {

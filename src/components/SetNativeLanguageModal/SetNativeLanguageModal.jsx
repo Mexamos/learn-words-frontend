@@ -6,7 +6,8 @@ import {
   Text,
   VStack,
   Heading,
-  NativeSelect
+  Select,
+  createListCollection
 } from '@chakra-ui/react';
 import { toast } from 'sonner';
 import { AVAILABLE_LANGUAGES, DEFAULT_NATIVE_LANGUAGE } from '../../constants/languages';
@@ -16,8 +17,13 @@ export default function SetNativeLanguageModal({ isOpen, onLanguageSet }) {
   const [selectedLanguage, setSelectedLanguage] = useState(DEFAULT_NATIVE_LANGUAGE);
   const [isLoading, setIsLoading] = useState(false);
 
+  const languageCollection = createListCollection({
+    items: AVAILABLE_LANGUAGES,
+    selectionMode: 'single',
+  });
+
   const handleLanguageChange = (e) => {
-    setSelectedLanguage(e.target.value);
+    setSelectedLanguage(e.value[0]);
   };
 
   const handleSubmit = async () => {
@@ -53,7 +59,13 @@ export default function SetNativeLanguageModal({ isOpen, onLanguageSet }) {
     >
       <Dialog.Backdrop />
       <Dialog.Positioner>
-        <Dialog.Content maxW="500px" className="set-native-language-modal">
+        <Dialog.Content 
+          maxW={{ base: 'full', sm: '95vw', md: '500px' }}
+          maxH={{ base: '100vh', md: 'auto' }}
+          borderRadius={{ base: 0, md: 'md' }}
+          m={{ base: 0, md: 4 }}
+          className="set-native-language-modal"
+        >
           <Dialog.Header>
             <VStack alignItems="flex-start" gap={2}>
               <Heading size="lg">Welcome! Set Your Native Language</Heading>
@@ -69,20 +81,34 @@ export default function SetNativeLanguageModal({ isOpen, onLanguageSet }) {
                 <Text fontSize="sm" fontWeight="medium" mb={2}>
                   Select Your Native Language
                 </Text>
-                <NativeSelect.Root size="lg" width="100%" bg="white">
-                  <NativeSelect.Field
-                    value={selectedLanguage}
-                    onChange={handleLanguageChange}
-                    disabled={isLoading}
-                  >
-                    {AVAILABLE_LANGUAGES.map((language) => (
-                      <option key={language.value} value={language.value}>
-                        {language.label}
-                      </option>
-                    ))}
-                  </NativeSelect.Field>
-                  <NativeSelect.Indicator />
-                </NativeSelect.Root>
+                <Select.Root
+                  collection={languageCollection}
+                  value={[selectedLanguage]}
+                  onValueChange={handleLanguageChange}
+                  width="100%"
+                  disabled={isLoading}
+                  positioning={{ sameWidth: true }}
+                >
+                  <Select.Control bg="white">
+                    <Select.Trigger>
+                      <Select.ValueText />
+                    </Select.Trigger>
+                    <Select.IndicatorGroup>
+                      <Select.Indicator />
+                    </Select.IndicatorGroup>
+                  </Select.Control>
+
+                  <Select.Positioner>
+                    <Select.Content>
+                      {languageCollection.items.map((language) => (
+                        <Select.Item item={language} key={language.value}>
+                          {language.label}
+                          <Select.ItemIndicator />
+                        </Select.Item>
+                      ))}
+                    </Select.Content>
+                  </Select.Positioner>
+                </Select.Root>
               </Box>
             </VStack>
           </Dialog.Body>
