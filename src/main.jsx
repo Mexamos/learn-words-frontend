@@ -72,7 +72,7 @@ root.render(
             richColors
             expand={false}
             visibleToasts={3}
-            closeButton={false}
+            closeButton={true}
             offset="16px"
             gap={12}
           />

@@ -4,14 +4,29 @@ import * as THREE from 'three'
 
 export default function Congratulations({ wordCount, onClose }) {
   const canvasRef = useRef(null)
+  const containerRef = useRef(null)
   const [showContent, setShowContent] = useState(false)
 
   useEffect(() => {
     if (!canvasRef.current) return
 
+    const prefersReducedMotion =
+      typeof window !== 'undefined' &&
+      window.matchMedia &&
+      window.matchMedia('(prefers-reduced-motion: reduce)').matches
+
+    // If user prefers reduced motion, skip heavy animation completely
+    if (prefersReducedMotion) {
+      setShowContent(true)
+      return
+    }
+
+    const isSmallScreen =
+      typeof window !== 'undefined' && window.matchMedia && window.matchMedia('(max-width: 768px)').matches
+
     // Scene setup
     const scene = new THREE.Scene()
-    const camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000)
+    const camera = new THREE.PerspectiveCamera(75, 1, 0.1, 1000)
     camera.position.z = 5
 
     const renderer = new THREE.WebGLRenderer({ 
@@ -19,8 +34,18 @@ export default function Congratulations({ wordCount, onClose }) {
       alpha: true,
       antialias: true 
     })
-    renderer.setSize(window.innerWidth, window.innerHeight)
-    renderer.setPixelRatio(window.devicePixelRatio)
+    renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, isSmallScreen ? 1.5 : 2))
+
+    const resizeToContainer = () => {
+      const el = containerRef.current
+      if (!el) return
+      const width = el.clientWidth || window.innerWidth
+      const height = el.clientHeight || window.innerHeight
+      camera.aspect = width / height
+      camera.updateProjectionMatrix()
+      renderer.setSize(width, height, false)
+    }
+    resizeToContainer()
 
     // Firework system
     const fireworks = []
@@ -51,7 +76,9 @@ export default function Congratulations({ wordCount, onClose }) {
         
         // Explosion particles
         this.particles = []
-        this.particleCount = 80 + Math.floor(Math.random() * 40)
+        const base = isSmallScreen ? 40 : 80
+        const spread = isSmallScreen ? 20 : 40
+        this.particleCount = base + Math.floor(Math.random() * spread)
         
         scene.add(this.rocket)
       }
@@ -164,7 +191,7 @@ export default function Congratulations({ wordCount, onClose }) {
 
     // Launch fireworks periodically
     let lastLaunch = 0
-    const launchInterval = 800 // ms
+    const launchInterval = isSmallScreen ? 950 : 800 // ms
 
     const animate = () => {
       requestAnimationFrame(animate)
@@ -172,7 +199,8 @@ export default function Congratulations({ wordCount, onClose }) {
       const now = Date.now()
       
       // Launch new firework
-      if (now - lastLaunch > launchInterval && fireworks.length < 5) {
+      const maxFireworks = isSmallScreen ? 3 : 5
+      if (now - lastLaunch > launchInterval && fireworks.length < maxFireworks) {
         fireworks.push(new Firework())
         lastLaunch = now
       }
@@ -194,24 +222,21 @@ export default function Congratulations({ wordCount, onClose }) {
     // Show content with delay
     setTimeout(() => setShowContent(true), 300)
 
-    // Handle resize
-    const handleResize = () => {
-      camera.aspect = window.innerWidth / window.innerHeight
-      camera.updateProjectionMatrix()
-      renderer.setSize(window.innerWidth, window.innerHeight)
-    }
-    window.addEventListener('resize', handleResize)
+    const ro = containerRef.current ? new ResizeObserver(() => resizeToContainer()) : null
+    if (ro && containerRef.current) ro.observe(containerRef.current)
+    window.addEventListener('resize', resizeToContainer)
 
     // Cleanup
     return () => {
-      window.removeEventListener('resize', handleResize)
+      window.removeEventListener('resize', resizeToContainer)
+      if (ro) ro.disconnect()
       fireworks.forEach(fw => fw.dispose())
       renderer.dispose()
     }
   }, [])
 
   return (
-    <div className="congratulations-container">
+    <div className="congratulations-container" ref={containerRef}>
       <canvas ref={canvasRef} className="fireworks-canvas" />
 
       <div className={`congratulations-content ${showContent ? 'show' : ''}`}>
@@ -244,7 +269,7 @@ export default function Congratulations({ wordCount, onClose }) {
           >
             <polyline points="15 18 9 12 15 6" />
           </svg>
-          <span>Back to Selection</span>
+          <span>Exit</span>
         </button>
       </div>
     </div>

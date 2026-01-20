@@ -1,170 +1,189 @@
-import { useState, useEffect, useCallback, memo } from 'react'
+import { useMemo, useRef, useState, useEffect, useCallback, memo } from 'react'
 import PropTypes from 'prop-types'
 import './MatchPairs.css'
 
 const MatchPairs = ({ words, onComplete }) => {
-  const [leftWords, setLeftWords] = useState([])
-  const [rightWords, setRightWords] = useState([])
   const [matchedPairs, setMatchedPairs] = useState([])
+  const [wordErrors, setWordErrors] = useState({}) // Track errors for each word
   const [selectedLeft, setSelectedLeft] = useState(null)
   const [selectedRight, setSelectedRight] = useState(null)
-  const [errorPair, setErrorPair] = useState(null)
-  const [wordErrors, setWordErrors] = useState({}) // Track errors for each word
+  const [feedback, setFeedback] = useState(null) // { type: 'error' | 'success', message: string }
+  const hasCompletedRef = useRef(false)
 
-  // Initialize words on mount
-  useEffect(() => {
-    const left = words.map((word, index) => ({
+  const leftItems = useMemo(() => {
+    return words.map((word) => ({
       id: word.id,
-      text: word.word,
-      originalIndex: index
+      text: word.word
     }))
-    
-    const right = words.map((word, index) => ({
+  }, [words])
+
+  const rightItems = useMemo(() => {
+    const base = words.map((word) => ({
       id: word.id,
-      text: word.translation,
-      originalIndex: index
+      text: word.translation
     }))
-    
-    // Shuffle right column
-    const shuffled = [...right]
+    // Shuffle translations once per words change
+    const shuffled = [...base]
     for (let i = shuffled.length - 1; i > 0; i--) {
-      const j = Math.floor(Math.random() * (i + 1));
-      [shuffled[i], shuffled[j]] = [shuffled[j], shuffled[i]]
+      const j = Math.floor(Math.random() * (i + 1))
+      ;[shuffled[i], shuffled[j]] = [shuffled[j], shuffled[i]]
     }
-    
-    setLeftWords(left)
-    setRightWords(shuffled)
+    return shuffled
+  }, [words])
+
+  const remainingLeftItems = useMemo(() => {
+    const matchedIds = new Set(matchedPairs.map((p) => p.id))
+    return leftItems.filter((w) => !matchedIds.has(w.id))
+  }, [leftItems, matchedPairs])
+
+  const remainingRightItems = useMemo(() => {
+    const matchedIds = new Set(matchedPairs.map((p) => p.id))
+    return rightItems.filter((w) => !matchedIds.has(w.id))
+  }, [rightItems, matchedPairs])
+
+  // Reset internal state when words change
+  useEffect(() => {
+    setMatchedPairs([])
+    setWordErrors({})
+    setSelectedLeft(null)
+    setSelectedRight(null)
+    setFeedback(null)
+    hasCompletedRef.current = false
   }, [words])
 
   // Check if all pairs are matched
   useEffect(() => {
-    if (matchedPairs.length === words.length && words.length > 0) {
+    if (!hasCompletedRef.current && matchedPairs.length === words.length && words.length > 0) {
+      hasCompletedRef.current = true
       onComplete(matchedPairs)
     }
   }, [matchedPairs, words.length, onComplete])
 
-  const handleLeftClick = useCallback((word) => {
-    if (matchedPairs.some(pair => pair.id === word.id)) return
-    
-    setSelectedLeft(word)
-    
-    // If right word is already selected, check for match
-    if (selectedRight) {
-      checkMatch(word, selectedRight)
-    }
-  }, [selectedRight, matchedPairs])
+  const clearFeedbackSoon = useCallback(() => {
+    window.setTimeout(() => setFeedback(null), 700)
+  }, [])
 
-  const handleRightClick = useCallback((word) => {
-    if (matchedPairs.some(pair => pair.id === word.id)) return
-    
-    setSelectedRight(word)
-    
-    // If left word is already selected, check for match
-    if (selectedLeft) {
-      checkMatch(selectedLeft, word)
-    }
-  }, [selectedLeft, matchedPairs])
+  const confirmPair = useCallback(
+    (left, right) => {
+      if (!left || !right) return
 
-  const checkMatch = useCallback((left, right) => {
-    if (left.id === right.id) {
-      // Correct match
-      setMatchedPairs(prev => [...prev, {
-        id: left.id,
-        word: left.text,
-        translation: right.text,
-        hasError: wordErrors[left.id] || false // Include error status
-      }])
-      setSelectedLeft(null)
-      setSelectedRight(null)
-    } else {
-      // Wrong match - mark both words as having an error
-      setWordErrors(prev => ({
-        ...prev,
-        [left.id]: true,
-        [right.id]: true
-      }))
-      setErrorPair({ left, right })
-      
-      // Clear error after 2 seconds
-      setTimeout(() => {
-        setErrorPair(null)
+      if (left.id === right.id) {
+        setMatchedPairs((prev) => [
+          ...prev,
+          {
+            id: left.id,
+            word: left.text,
+            translation: right.text,
+            hasError: wordErrors[left.id] || false
+          }
+        ])
         setSelectedLeft(null)
         setSelectedRight(null)
-      }, 1000)
-    }
-  }, [wordErrors])
+        setFeedback({ type: 'success', message: 'Matched!' })
+        clearFeedbackSoon()
+      } else {
+        setWordErrors((prev) => ({
+          ...prev,
+          [left.id]: true,
+          [right.id]: true
+        }))
+        setFeedback({ type: 'error', message: 'Not a match — try again' })
+        clearFeedbackSoon()
+        // Keep left selection: lets the user quickly retry choosing the translation
+        setSelectedRight(null)
+      }
+    },
+    [wordErrors, clearFeedbackSoon]
+  )
 
-  const getLeftItemClassName = (word) => {
-    const isMatched = matchedPairs.some(pair => pair.id === word.id)
-    const isSelected = selectedLeft?.id === word.id
-    const isError = errorPair?.left?.id === word.id
-    
-    return `match-item ${isMatched ? 'matched' : ''} ${isSelected ? 'selected' : ''} ${isError ? 'error' : ''}`
+  const handleLeftClick = useCallback(
+    (item) => {
+      setSelectedLeft(item)
+      setSelectedRight(null)
+      setFeedback(null)
+    },
+    []
+  )
+
+  const handleRightClick = useCallback(
+    (item) => {
+      if (!selectedLeft) return
+      setSelectedRight(item)
+      confirmPair(selectedLeft, item)
+    },
+    [selectedLeft, confirmPair]
+  )
+
+  const getItemClassName = (item, side) => {
+    const isSelected = side === 'left' ? selectedLeft?.id === item.id : selectedRight?.id === item.id
+    const hasEverErrored = Boolean(wordErrors[item.id])
+    return `match-item${isSelected ? ' selected' : ''}${hasEverErrored ? ' has-error' : ''}`
   }
 
-  const getRightItemClassName = (word) => {
-    const isMatched = matchedPairs.some(pair => pair.id === word.id)
-    const isSelected = selectedRight?.id === word.id
-    const isError = errorPair?.right?.id === word.id
-    
-    return `match-item ${isMatched ? 'matched' : ''} ${isSelected ? 'selected' : ''} ${isError ? 'error' : ''}`
-  }
+  const stepLabel = selectedLeft ? 'Step 2/2: Choose the translation' : 'Step 1/2: Choose the word'
 
   return (
     <div className="match-pairs-container">
-      {/* Matched pairs section */}
-      {matchedPairs.length > 0 && (
-        <div className="matched-section">
-          <h3>Matched Pairs ({matchedPairs.length}/{words.length})</h3>
-          <div className="matched-pairs-display">
-            <div className="matched-column">
-              {matchedPairs.map(pair => (
-                <div key={`matched-left-${pair.id}`} className="matched-item">
-                  {pair.word}
-                </div>
-              ))}
-            </div>
-            <div className="matched-column">
-              {matchedPairs.map(pair => (
-                <div key={`matched-right-${pair.id}`} className="matched-item">
-                  {pair.translation}
-                </div>
-              ))}
-            </div>
-          </div>
+      <div className="match-pairs-header">
+        <div className="match-pairs-progress">
+          Matched {matchedPairs.length}/{words.length}
+        </div>
+        <div className="match-pairs-step">{stepLabel}</div>
+      </div>
+
+      {selectedLeft && (
+        <div className="match-pairs-selected">
+          <div className="match-pairs-selected-label">Selected word</div>
+          <div className="match-pairs-selected-value">{selectedLeft.text}</div>
+          <button className="match-pairs-clear" onClick={() => setSelectedLeft(null)} type="button">
+            Change
+          </button>
         </div>
       )}
 
-      {/* Active matching section */}
-      <div className="matching-section">
-        <div className="match-column">
-          {leftWords
-            .filter(word => !matchedPairs.some(pair => pair.id === word.id))
-            .map(word => (
-              <button
-                key={`left-${word.id}`}
-                className={getLeftItemClassName(word)}
-                onClick={() => handleLeftClick(word)}
-                disabled={errorPair !== null}
-              >
-                {word.text}
-              </button>
-            ))}
+      {feedback && (
+        <div
+          className={`match-pairs-feedback ${feedback.type}`}
+          role={feedback.type === 'error' ? 'alert' : 'status'}
+          aria-live="polite"
+        >
+          {feedback.message}
         </div>
-        
-        <div className="match-column">
-          {rightWords
-            .filter(word => !matchedPairs.some(pair => pair.id === word.id))
-            .map(word => (
+      )}
+
+      <div className={`match-pairs-panels${selectedLeft ? ' step-2' : ' step-1'}`}>
+        <div className="match-panel">
+          <div className="match-panel-title">Words</div>
+          <div className="match-panel-list">
+            {remainingLeftItems.map((item) => (
               <button
-                key={`right-${word.id}`}
-                className={getRightItemClassName(word)}
-                onClick={() => handleRightClick(word)}
-                disabled={errorPair !== null}
+                key={`left-${item.id}`}
+                className={getItemClassName(item, 'left')}
+                onClick={() => handleLeftClick(item)}
+                type="button"
               >
-                {word.text}
+                {item.text}
               </button>
             ))}
+          </div>
+        </div>
+
+        <div className="match-panel">
+          <div className="match-panel-title">Translations</div>
+          <div className="match-panel-list">
+            {remainingRightItems.map((item) => (
+              <button
+                key={`right-${item.id}`}
+                className={getItemClassName(item, 'right')}
+                onClick={() => handleRightClick(item)}
+                type="button"
+                disabled={!selectedLeft}
+                aria-disabled={!selectedLeft}
+              >
+                {item.text}
+              </button>
+            ))}
+          </div>
         </div>
       </div>
     </div>

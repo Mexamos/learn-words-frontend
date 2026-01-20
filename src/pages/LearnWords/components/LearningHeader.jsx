@@ -14,7 +14,7 @@ const LearningHeader = ({
   <div className="learning-header">
     <button className="back-button" onClick={onExit}>
       <ArrowIcon direction="left" size={20} />
-      <span>Back to Selection</span>
+      <span>Exit</span>
     </button>
     {totalModes > 1 && (
       <div className="mode-progress">

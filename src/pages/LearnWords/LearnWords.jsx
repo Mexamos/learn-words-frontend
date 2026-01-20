@@ -1,19 +1,14 @@
 import './LearnWords.css'
 import { useState, useEffect, useMemo, useCallback } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { Spinner, Select, Portal, createListCollection } from '@chakra-ui/react'
+import { Spinner } from '@chakra-ui/react'
 import { toast } from 'sonner'
 import Layout from '../../components/Layout/Layout'
-import FlipCard from '../../components/FlipCard/FlipCard'
-import SelectCorrectAnswer from '../../components/SelectCorrectAnswer/SelectCorrectAnswer'
-import MatchPairs from '../../components/MatchPairs/MatchPairs'
-import MakeWord from '../../components/MakeWord/MakeWord'
 import Congratulations from '../../components/Congratulations/Congratulations'
-import LearningHeader from './components/LearningHeader'
-import NavigationButtons from './components/NavigationButtons'
+import LearnSetupScreen from './components/LearnSetupScreen'
+import LearnSessionScreen from './components/LearnSessionScreen'
 import { getVocabularies, getAllWords } from '../../services/wordsService'
 import { getLearningModes, createLearningLog } from '../../services/learningService'
-import { LANGUAGE_NAMES } from '../../constants/languages'
 import { LEARNING_MODES, DEFAULT_WORD_COUNT } from './constants'
 import { shuffleArray } from '../../utils/helpers'
 
@@ -399,17 +394,6 @@ export default function LearnWords() {
     handleExit()
   }
 
-  const getLanguageName = (code) => {
-    return LANGUAGE_NAMES[code] || code.toUpperCase()
-  }
-
-  const vocabularyCollection = createListCollection({
-    items: vocabularies.map((vocab) => ({
-      value: vocab.id.toString(),
-      label: `${vocab.name} (${getLanguageName(vocab.language_from)} → ${getLanguageName(vocab.language_to)})`
-    }))
-  })
-
   const frontText = currentModeCode === LEARNING_MODES.WORD_TO_TRANSLATION.value ? currentWord?.word : currentWord?.translation
   const backText = currentModeCode === LEARNING_MODES.WORD_TO_TRANSLATION.value ? currentWord?.translation : currentWord?.word
   
@@ -441,166 +425,48 @@ export default function LearnWords() {
         </Layout>
       )
     }
-
-    const isFirstWord = currentIndex === 0
-
     return (
       <Layout pageTitle="Learn Words">
-        <div className="learn-words-container">
-          <LearningHeader 
-            onExit={handleExit}
-            currentIndex={currentIndex}
-            totalWords={words.length}
-            hideCounter={isMatchPairs}
-            currentMode={learningModes.find(m => m.code === currentModeCode)?.name || ''}
-            currentModeIndex={currentModeIndex}
-            totalModes={selectedModes.length}
-          />
-
-          <div className="learning-content">
-            {isMatchPairs ? (
-              <MatchPairs
-                words={words}
-                onComplete={handleMatchPairsComplete}
-              />
-            ) : (
-              <>
-                <NavigationButtons
-                  isFirstWord={isFirstWord || isMakeWord}
-                  onPrevious={handlePrevious}
-                  onNext={handleNext}
-                  isNextDisabled={(isSelectCorrectAnswer || isMakeWord) && (!currentWordResult || !currentWordResult.isAnswered)}
-                />
-
-            <div className="card-wrapper">
-                  {isSelectCorrectAnswer ? (
-                    <SelectCorrectAnswer
-                      key={currentIndex}
-                      word={currentWord?.word}
-                      options={selectCorrectAnswerOptions}
-                      correctAnswer={currentWord?.translation}
-                      onAnswerSelected={(option, isCorrect) => 
-                        handleAnswerSelected(currentWord.id, option, isCorrect)
-                      }
-                      selectedAnswer={currentWordResult?.selectedAnswer}
-                      isAnswered={currentWordResult?.isAnswered || false}
-                    />
-                  ) : isMakeWord ? (
-                    <MakeWord
-                      key={currentIndex}
-                      word={currentWord?.word}
-                      translation={currentWord?.translation}
-                      onAnswerComplete={(isCorrect) => 
-                        handleMakeWordComplete(currentWord.id, isCorrect)
-                      }
-                    />
-                  ) : (
-              <FlipCard 
-                key={currentIndex}
-                frontText={frontText} 
-                backText={backText}
-              />
-                  )}
-            </div>
-              </>
-            )}
-          </div>
-        </div>
+        <LearnSessionScreen
+          words={words}
+          currentIndex={currentIndex}
+          currentModeIndex={currentModeIndex}
+          selectedModes={selectedModes}
+          learningModes={learningModes}
+          currentModeCode={currentModeCode}
+          isMatchPairs={isMatchPairs}
+          isSelectCorrectAnswer={isSelectCorrectAnswer}
+          isMakeWord={isMakeWord}
+          currentWord={currentWord}
+          currentWordResult={currentWordResult}
+          selectCorrectAnswerOptions={selectCorrectAnswerOptions}
+          frontText={frontText}
+          backText={backText}
+          onExit={handleExit}
+          onPrevious={handlePrevious}
+          onNext={handleNext}
+          onMatchPairsComplete={handleMatchPairsComplete}
+          onAnswerSelected={handleAnswerSelected}
+          onMakeWordComplete={handleMakeWordComplete}
+        />
       </Layout>
     )
   }
 
   return (
     <Layout pageTitle="Learn Words">
-      <div className="learn-words-container">
-        <div className="selection-screen">
-          {vocabularies.length === 0 ? (
-            <div className="empty-state">
-              <div className="empty-state-icon">📚</div>
-              <p>You don't have any vocabularies yet.</p>
-              <p>Add words to create your first vocabulary.</p>
-            </div>
-          ) : (
-            <div className="selection-form">
-              <div className="form-group">
-                <label className="form-label">Select Learning Modes (you can select multiple)</label>
-                <div className="mode-selection-checkboxes">
-                  {learningModes.map((mode) => (
-                    <label key={mode.id}>
-                      <input
-                        type="checkbox"
-                        checked={selectedModes.includes(mode.code)}
-                        onChange={(e) => handleModeToggle(mode, e.target.checked)}
-                      />
-                      <span>{mode.name}</span>
-                    </label>
-                  ))}
-                </div>
-              </div>
-
-              <div className="form-group">
-                <Select.Root
-                  collection={vocabularyCollection}
-                  width="100%"
-                  value={selectedVocabulary}
-                  onValueChange={(e) => setSelectedVocabulary(e.value)}
-                >
-                  <Select.Label>Select Vocabulary</Select.Label>
-                  <Select.Control>
-                    <Select.Trigger>
-                      <Select.ValueText placeholder="Select a vocabulary" />
-                    </Select.Trigger>
-                    <Select.IndicatorGroup>
-                      <Select.Indicator />
-                    </Select.IndicatorGroup>
-                  </Select.Control>
-
-                  <Portal>
-                    <Select.Positioner>
-                      <Select.Content>
-                        {vocabularyCollection.items.map((vocab) => (
-                          <Select.Item item={vocab} key={vocab.value}>
-                            {vocab.label}
-                            <Select.ItemIndicator />
-                          </Select.Item>
-                        ))}
-                      </Select.Content>
-                    </Select.Positioner>
-                  </Portal>
-                </Select.Root>
-              </div>
-
-              <div className="form-group">
-                <label className="form-label" htmlFor="word-count-input">
-                  Number of Words
-                </label>
-                <input
-                  id="word-count-input"
-                  type="number"
-                  className="word-count-input"
-                  min="1"
-                  value={wordCount}
-                  onChange={(e) => {
-                    setWordCount(e.target.value)
-                  }}
-                  onBlur={(e) => {
-                    setWordCount(Math.max(1, parseInt(e.target.value) || 1))
-                  }}
-                  placeholder="Enter number of words"
-                />
-              </div>
-
-              <button 
-                className="start-button" 
-                onClick={handleStartLearning}
-                disabled={selectedVocabulary.length === 0 || selectedModes.length === 0}
-              >
-                Start Learning
-              </button>
-            </div>
-          )}
-        </div>
-      </div>
+      <LearnSetupScreen
+        vocabularies={vocabularies}
+        learningModes={learningModes}
+        selectedModes={selectedModes}
+        selectedVocabulary={selectedVocabulary}
+        wordCount={wordCount}
+        onModeToggle={handleModeToggle}
+        onVocabularyChange={setSelectedVocabulary}
+        onWordCountChange={(e) => setWordCount(e.target.value)}
+        onWordCountBlur={(e) => setWordCount(Math.max(1, parseInt(e.target.value) || 1))}
+        onStartLearning={handleStartLearning}
+      />
     </Layout>
   )
 }

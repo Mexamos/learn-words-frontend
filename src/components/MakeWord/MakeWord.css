@@ -1,19 +1,19 @@
 .make-word-container {
   margin: 0 auto;
-  padding: 30px;
+  padding: 24px;
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: 30px;
+  gap: 20px;
+  font-size: 1.3rem;
 }
 
 /* Translation (clue) */
 .make-word-translation {
-  font-size: 1.8rem;
   font-weight: 600;
   color: #2196f3;
   text-align: center;
-  padding: 20px;
+  padding: 14px;
   background: rgba(33, 150, 243, 0.1);
   border-radius: 12px;
   width: 100%;
@@ -29,12 +29,12 @@
 }
 
 .make-word-slot {
-  width: 50px;
-  height: 60px;
+  width: 40px;
+  height: 48px;
   border: 3px solid #e0e0e0;
   border-radius: 8px;
   background: white;
-  font-size: 1.8rem;
+  font-size: inherit;
   font-weight: 600;
   color: #333;
   cursor: pointer;
@@ -83,7 +83,7 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  font-size: 1.5rem;
+  font-size: inherit;
   color: #e0e0e0;
   transition: all 0.3s ease;
 }
@@ -114,12 +114,12 @@
 }
 
 .make-word-letter {
-  width: 50px;
-  height: 60px;
+  width: 40px;
+  height: 48px;
   border: 2px solid #2196f3;
   border-radius: 8px;
   background: white;
-  font-size: 1.8rem;
+  font-size: inherit;
   font-weight: 600;
   color: #2196f3;
   cursor: pointer;
@@ -145,9 +145,9 @@
 
 /* Result message */
 .make-word-result {
-  font-size: 1.3rem;
+  font-size: inherit;
   font-weight: 600;
-  padding: 15px 30px;
+  padding: 12px 18px;
   border-radius: 8px;
   animation: slideIn 0.3s ease;
 }
@@ -183,25 +183,21 @@
   }
 
   .make-word-translation {
-    font-size: 1.4rem;
     padding: 15px;
   }
 
   .make-word-slot,
   .make-word-letter {
-    width: 45px;
-    height: 55px;
-    font-size: 1.5rem;
+    width: 38px;
+    height: 46px;
   }
 
   .error-mark {
     width: 30px;
     height: 30px;
-    font-size: 1.2rem;
   }
 
   .make-word-result {
-    font-size: 1.1rem;
     padding: 12px 20px;
   }
 }
@@ -213,25 +209,21 @@
   }
 
   .make-word-translation {
-    font-size: 1.25rem;
     padding: 12px;
   }
 
   .make-word-slot,
   .make-word-letter {
-    width: 40px;
-    height: 50px;
-    font-size: 1.25rem;
+    width: 36px;
+    height: 44px;
   }
 
   .error-mark {
     width: 28px;
     height: 28px;
-    font-size: 1rem;
   }
 
   .make-word-result {
-    font-size: 1rem;
     padding: 10px 15px;
   }
 }

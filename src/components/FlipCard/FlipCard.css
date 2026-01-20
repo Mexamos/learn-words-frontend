@@ -2,7 +2,7 @@
   perspective: 1000px;
   width: 100%;
   max-width: 600px;
-  height: 400px;
+  height: clamp(240px, 45vh, 420px);
   cursor: pointer;
   user-select: none;
 }
@@ -50,8 +50,8 @@
 
 @media (max-width: 768px) {
   .flip-card-container {
-    max-width: 90vw;
-    height: 300px;
+    max-width: 100%;
+    height: clamp(220px, 38vh, 340px);
   }
 
   .flip-card-content {
